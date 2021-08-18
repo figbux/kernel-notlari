@@ -1,71 +1,155 @@
-[+] Kernel Exploitation Notları
+------------------------[ Kernel Exploitation Notları ]-------------------------
 
-[*] Önsöz
+    1  Önsöz
+    2  Amaç
+    3  Kaynakları edinin
+    4  Lab ortamı kurulumu
+    5  CTF'ler
+    6  Kernel ne işe yarıyor?
+        6.1  Kernel map
+        6.2  Kernel 5.8'in codebase'ini biraz incelersek:
+    7  Ring goygoyu
+    8  Kernel Exploitation Temelleri
+        8.1  Basit exploitation stratejisi - Büyük resim:
+        8.2  Kernel'de nasıl zafiyetler var?
+        8.3  Bu zafiyetleri nasıl sömürülür?
+        8.4  Bazı kernel güvenlik önlemleri ve aşma yöntemleri
+        8.5  Debugging
+        8.6  Nerelerde zafiyetler var?
+            8.6.1  LKM (Loadable Kernel Module)
+                8.6.1.1  LKM'lerin kullanım alanları:
+                8.6.1.2  LKM dosya yapısı
+                8.6.1.3  LKM'lerle çalışmak için komutlar
+    9  Proc cheatsheet
+    10  Önemli kernel yapıları, fonksiyonlar vs. kernel v5.8 için sunulmuştur 
+        10.1  task_struct: "işlem"in tanımı
+        10.2  cred struct: işlemin yetkilerinin tanımı
+            10.2.1  "current" makrosu: o anki koşan işleme pointer
+        10.3  file, fdtable, files_struct: dosyalar
+        10.4  Virtual function table (vft) yaklaşımı
+        10.5  socket, sock, skb: ağ
+        10.6  netlink_sock: IPC için özel soket
+        10.7  Hepsi bir arada: current, task_struct, files_struct, fdtable,
+        10.8  Reference counter kavramı
+        10.9  Understanding page fault trace
+    11  Kernel'in bellek yönetimi
+        11.1  List of address types used in Linux
+            11.1.1  User virtual addresses
+            11.1.2  Physical addresses
+            11.1.3  Bus addresses
+            11.1.4  Kernel logical addresses
+            11.1.5  Kernel virtual addresses
+        11.2  High and Low Memory
+            11.2.1  Low memory
+            11.2.2  High memory
+        11.3  Page Tables
+        11.4  Virtual Memory Areas
+        11.5  The mmap Device Operation
+        11.6  Allocators
+            11.6.1  Zoned page frame allocator (buddy allocator)
+            11.6.2  Slab allocators
+            11.6.3  İsimlendirme
+                11.6.3.1  Cache
+                11.6.3.2  slab
+    12  Kernel'in bellek yönetimi 2 - Tanenbaum: Modern Operating Systems 2014 ch 3
+        12.1  Model 1: Memory abstraction yok
+        12.2  Model 2: Base ve limit register'ları ile memory abstraction
+        12.3  Swapping
+        12.4  Boş belleğin yönetimi
+            12.4.1  bitmap ile
+            12.4.2  linked list ile
+        12.5  Sanal bellek (virtual memory)
+            12.5.1  Paging
+                12.5.1.1  page
+                12.5.1.2  page frame
+                12.5.1.3  page table
+                12.5.1.4  page table entry
+                12.5.1.5  TLB (translation lookaside buffer) 
+                    12.5.1.5.1  Çalışması
+                12.5.1.6  Soft miss
+                12.5.1.7  hard miss
+                12.5.1.8  page table walk
+                12.5.1.9  minor page fault
+                12.5.1.10  major page fault
+                12.5.1.11  segmentation fault
+                12.5.1.12  multilevel page tables
+                12.5.1.13  inverted page table
+                12.5.1.14  Page replacement algoritmaları
+                12.5.1.15  İdeal page size
+                12.5.1.16  Instruction ve data space'leri ayrı tutmak
+                12.5.1.17  Shared pages ve COW (copy on write)
+                12.5.1.18  Shared libraries
+                12.5.1.19  Mapped files
+            12.5.2  Adım adım paging
+            12.5.3  Adım adım page fault handling
+            12.5.4  Diske page yedekleme
+            12.5.5  Segmentation
+                12.5.5.1  x86-64: Segmentation artık yok
+                12.5.5.2  x86: Segmentleri page'lemek
+                    12.5.5.2.1  LDT (local descriptor table)
+                    12.5.5.2.2  GDT (global descriptor table)
+                    12.5.5.2.3  segment:offset -> fiziksel adres dönüşümü
+    13  Random notes to put somewhere in the note
+        13.1  KASLR -> KAISER -> PTI
+        13.2  Spinlock
+    14  Notes from pwn.college kernel module
+        14.1  Rings
+        14.2  Different types of OS models
+        14.3  How kernel handles syscalls
+        14.4  Kernel memory vs userspace memory
+        14.5  Possible kernel attack vectors
+        14.6  Kernel modules
+            14.6.1  Ways to interact w/ kernel modules
+            14.6.2  Syscall hooking
+            14.6.3  Interrupt hooking
+            14.6.4  Interation w/ modules via files
+                14.6.4.1  read() and write()
+                14.6.4.2  ioctl()
+                14.6.4.3  Kernel Race Conditions
+                14.6.4.4  On credentials
+    15  Kernelde Güvenlik
+        15.1  SELinux
+            15.1.1  Bypassing SELinux
+        15.2  SecComp
+    16  Misc
+        16.1  UML (user mode linux)
+        16.2  Linux insides kalinan yer:
+        16.3  rawsploit: libc çok büyük gelince
+        16.4  AMD64 Kernel calling conventions
+    17  Fuzzing
+    18  Android SDK emulator kullanımı
+        18.1  Start emulator
+        18.2  Start gdb
+        18.3  Set cpu cores to 1
+    19  Rastgele Exploitation Notları
+        19.1  Data-only attacks
+        19.2  addr_limit on arm64
+        19.3  DiShen's UAF exploitation gadget: "struct iovec"
+            19.3.1  How to pwn with this?
+        19.4  Always winning the races w/ userfaultfd
+        19.5  seq_operations'un ilk pointer'ını ezmenin yeterli oluşu
+        19.6  Stack pivot gadget'indeki adresin son 3 byte'ı 0'dan farklı olmalı
+        19.7  mov rdi, rax --> mov edi, eax 'a dönüşüyor ve patlatıyor
+        19.8  swapgs_restore_regs_and_return_to_usermode yerine kullanılabilecekler
+
+--[1] Önsöz
 
     Bu yazı linux'da userspace binary exploitation konusuna aşina olup da,
     kernel exploitation'a giriş yapan birisi tarafından tutulan notlardan
     oluşmaktadır. Hedef okuyucu kitlesi de benzer nitelikte bilgi sahibi
-    kişilerdir. Bir "not", yani kişisel ihtiyaçlara yönelik yazılmış bir
-    yazı; aynı zamanda da yayınlanmış bir yazı, yani biraz konu bağlamı
-    derli toplu tutulmaya çalışıldı. Konuya başlayanlar için birincil kaynak
-    olarak okunsun diye değil de, konu başlıklarından haberdar etsin diye
-    yazıldı. İngilizce/Türkçe karışık bir not oldu. Kernel'e yeni girmiş
-    biri olarak yazarın bilmediği çok şey var, yazının büyük çoğunluğu
-    kopyalanmış içerik; yazarın tahminsel olarak sunduğu fikirlerin kesin
-    doğru olmadığı ise uyarılar ile belirtilmeye gayret edildi.
+    kişilerdir. Bir "not", yani kişisel ihtiyaçlara yönelik yazılmış bir yazı;
+    aynı zamanda da yayınlanmış bir yazı, yani biraz konu bağlamı derli toplu
+    tutulmaya çalışıldı. Konuya başlayanlar için birincil kaynak olarak okunsun
+    diye değil de, konu başlıklarından haberdar etsin diye yazıldı.
+    İngilizce/Türkçe karışık bir not oldu. Kernel'e yeni girmiş biri olarak
+    yazarın bilmediği çok şey var, yazının büyük çoğunluğu kopyalanmış içerik;
+    yazarın tahminsel olarak sunduğu fikirlerin kesin doğru olmadığı ise
+    uyarılar ile belirtilmeye gayret edildi.
 
     Yanlışım varsa pullrequest lütfen.
 
 
-[*] İçindekiler
-
-    [*] Amaç
-    [*] Kaynakları edinin
-    [*] Lab ortamı kurulumu
-    [*] Kernel ne işe yarıyor?
-        [-] Kernel map
-        [-] Kernel 5.8'in codebase'ini biraz incelersek:
-    [-] Ring goygoyu
-    [+] Kernel Exploitation Temelleri
-        [-] Basit exploitation stratejisi - Büyük resim:
-        [-] Kernel'de nasıl zafiyetler var?
-        [-] Bu zafiyetleri nasıl sömürülür?
-        [-] Bazı kernel güvenlik önlemleri ve aşma yöntemleri
-        [-] Debugging
-        [-] Nerelerde zafiyetler var?
-            [~] LKM (Loadable Kernel Module)
-                [o] LKM'lerin kullanım alanları:
-                [o] LKM dosya yapısı
-                [o] LKM'lerle çalışmak için komutlar
-    [+] LDD3 - Chapter 15, Memory Mapping and DMA
-        [-] List of address types used in Linux
-            [o] User virtual addresses
-            [o] Physical addresses
-            [o] Bus addresses
-            [o] Kernel logical addresses
-            [o] Kernel virtual addresses
-        [-] High and Low Memory
-            [o] Low memory
-            [o] High memory
-        [-] Page Tables
-        [-] Virtual Memory Areas
-        [-] The mmap Device Operation
-    [-] Proc cheatsheet
-    [-] Önemli kernel yapıları, fonksiyonlar vs. kernel v5.8 için sunulmuştur
-        [~] task_struct: "işlem"in tanımı
-        [~] cred struct: işlemin yetkilerinin tanımı
-        [-] "current" makrosu: o anki koşan işleme pointer
-        [~] file, fdtable, files_struct: dosyalar
-        [~] Virtual function table (vft) yaklaşımı
-        [~] socket, sock, skb: ağ
-        [~] netlink_sock: IPC için özel soket
-        [~] Hepsi bir arada: current, task_struct, files_struct, fdtable,
-        [~] Reference counter kavramı
-    [-] cheatsheet
-
-
-
-[*] Amaç
+--[2] Amaç
 
     Neden linux kernelini hacklemek isteyelim?
 
@@ -85,7 +169,7 @@
     zincirliyorsunuz vs.
 
 
-[*] Kaynakları edinin
+--[3] Kaynakları edinin
     
     Kernel'in en güncel dökümantasyonu her zaman kodun kendisi. Çok sık
     gelişen bir proje olarak linux kernel'inin sabit bir dökümantasyonu
@@ -108,7 +192,7 @@
     üzerinde zıplayabilir oluyoruz.
 
 
-[*] Lab ortamı kurulumu
+--[4] Lab ortamı kurulumu
 
     Başlangıç için lab kurmak yerine halka açık ctf ortamlarındaki kernel
     sorularına odaklanmak daha mantıklı. Kerneli derlemek birkaç saat
@@ -137,12 +221,12 @@
     Devamı için: https://www.cnblogs.com/hac425/p/9416886.html
 
 
-[*] CTF'ler
+--[5] CTF'ler
 
     pwnable.kr tasks (syscall, rootkit, softmmu, towelroot, kcrc, exynos)
 
 
-[*] Kernel ne işe yarıyor?
+--[6] Kernel ne işe yarıyor?
 
     "Ooo kernel, en derin, ring-0, matrix" falan filan diyoruz ama samimi
     olarak ne yaptığını anlamamız lazım.
@@ -160,7 +244,7 @@
     - vs...
 
     
-    [-] Kernel map
+----[6.1] Kernel map
 
         \Function|  human   |        |            |     |         |       
     Layer\       |interface | system | processing | mem | storage | network
@@ -182,30 +266,30 @@
     -------------+
 
 
-    [-] Kernel 5.8'in codebase'ini biraz incelersek:
+----[6.2] Kernel 5.8'in codebase'ini biraz incelersek:
 
-        ~/srcs/linux 0 $ ls -laF
-         arch/      --> architecture specific codes
-         block/     --> ?
-         crypto/    --> crypto implementations
-         drivers/   --> device drivers (biggest part of the kernel)
-         fs/        --> filesystem
-         include/   --> header files
-         init/      --> ??bootloader stuff??
-         ipc/       --> inter process communications
-         kernel/    --> ?
-         lib/       --> ?
-         mm/        --> memory management
-         net/       --> networking
-         samples/   --> ?
-         security/  --> security subsystems
-         sound/     --> sound subsystems
-         tools/     --> ?
-         usr/       --> ?
-         virt/      --> ??virtualization subsystems??
+   ~/srcs/linux 0 $ ls -laF
+    arch/      --> architecture specific codes
+    block/     --> ?
+    crypto/    --> crypto implementations
+    drivers/   --> device drivers (biggest part of the kernel)
+    fs/        --> filesystem
+    include/   --> header files
+    init/      --> ??bootloader stuff??
+    ipc/       --> inter process communications
+    kernel/    --> ?
+    lib/       --> ?
+    mm/        --> memory management
+    net/       --> networking
+    samples/   --> ?
+    security/  --> security subsystems
+    sound/     --> sound subsystems
+    tools/     --> ?
+    usr/       --> ?
+    virt/      --> ??virtualization subsystems??
 
 
-[-] Ring goygoyu
+--[7] Ring goygoyu
 
     CPU'lar katmanlı bir güvenlik mimarisi sağlar. 4 katman için yapı:
 
@@ -222,122 +306,127 @@
 
 
 
-[+] Kernel Exploitation Temelleri
+--[8] Kernel Exploitation Temelleri
 
-    [-] Basit exploitation stratejisi - Büyük resim:
+----[8.1] Basit exploitation stratejisi - Büyük resim:
 
-        1) Kernel kodunda bir zafiyet bul
-        2) Bu zafiyeti sömürerek kod çalıştır
-        3) Kendi işleminin yetkilerini root'unkine yükselt 
-        4) Kernelden userland'e geri dön
-        5) Root yetkileriyle hoş vakit geçir*
+    1) Kernel kodunda bir zafiyet bul
+    2) Bu zafiyeti sömürerek kod çalıştır
+    3) Kendi işleminin yetkilerini root'unkine yükselt 
+    4) Kernelden userland'e geri dön
+    5) Root yetkileriyle hoş vakit geçir*
 
-        *Kernel'de neden kalmıyoruz: Çünkü kernel uzayında networking,
-         dosya okuma/yazma, process oluşturma vs. userspace'e göre çok
-         zahmetli. Userspace'e bu yüzden dönmeyi tercih ediyoruz.
+    *Kernel'de neden kalmıyoruz: Çünkü kernel uzayında networking,
+     dosya okuma/yazma, process oluşturma vs. userspace'e göre çok
+     zahmetli. Userspace'e bu yüzden dönmeyi tercih ediyoruz.
 
-    [-] Kernel'de nasıl zafiyetler var?
+----[8.2] Kernel'de nasıl zafiyetler var?
 
-        Userspace'dekilerin aynıları! Yani:
-         - Buffer overflows
-         - Signedness issues
-         - Partial overwrites
-         - Use-after-free's
-         - TOCTOU
-         - Race conditions
-         - ...
+    Userspace'dekilerin aynıları! Yani:
+     - Buffer overflows
+     - Signedness issues
+     - Partial overwrites
+     - Use-after-free's
+     - TOCTOU
+     - Race conditions
+     - ...
 
-    [-] Bu zafiyetleri nasıl sömürülür?
+----[8.3] Bu zafiyetleri nasıl sömürülür?
 
-        Userspace'dekiler sömürdüğümüz gibi! Yani:
-         - Shellcoding
-         - ROP
-         - Pointer overwrites
-         - Type confusion
-         - Memory leaking (KASLR!)
-         - ...
+    Userspace'dekiler sömürdüğümüz gibi! Yani:
+     - Shellcoding
+     - ROP
+     - Pointer overwrites
+     - Type confusion
+     - Memory leaking (KASLR!)
+     - ...
 
-    [-] Bazı kernel güvenlik önlemleri ve aşma yöntemleri
+----[8.4] Bazı kernel güvenlik önlemleri ve aşma yöntemleri
 
-        - DEP: ROP
-        - KASLR: Memory leak
-        - Canaries: Memory leak, ya da heap'e yöneliş
-        - SMEP/SMAP: Supervisor Mode Execution/Access Protection
-                     SMEP Userspace'deki shellkodu kernelden çalıştırmayı
-                     engelliyor, SMAP doğrudan erişimi engelliyor. Belli
-                     register'ların belli bitlerini ROP'la değiştirerek
-                     kapatılabiliyor.
-        - LSM: Linux Security Modules. Apparmor, selinux ve security/
-               dizinindeki diğer modüller. Erişim konusunda fazladan katman
-               sağlıyorlar. Sandbox'ing falan. Detay bilmiyorum.
-        - PIE ve RELRO kernel için söz konusu değil
+    - DEP: ROP
+    - KASLR: Memory leak
+    - Canaries: Memory leak, ya da heap'e yöneliş
+    - SMEP: Supervisor Mode Execution Protection. Userspace'deki shellkodun
+            kernelden çalıştırılmasını engelliyor, SMEP yokken kernel
+            RIP'ini doğrudan userspace'deki bir shellcode'a zıplatmak
+            mümkündü. SMEP olunca ROP yapmak zorundayız. Ama rop chainimiz
+            userspace'de tutulabiliyor; bunu engellemiyor.
+    - SMAP: Supervisor Mode Access Protection, kernel'dan userspace'e
+            erişimi engelliyor. Yani artık ROP chainimizi de userspace'de
+            tutamıyoruz; mecbur bir kernel bufferına yazmak zorundayız
+            chainimizi. Belli register'ların (x86'da CR3) belli
+            bitlerini ROP'la değiştirerek kapatılabiliyorlar bunlar.
+    - LSM: Linux Security Modules. Apparmor, selinux ve security/
+           dizinindeki diğer modüller. Erişim konusunda fazladan katman
+           sağlıyorlar. Sandbox'ing falan. Detay bilmiyorum.
+    - PIE ve RELRO kernel için söz konusu değil
 
-        Not: Bunlar işlemcinin sunduğu özelliklerle doğrudan alakalı; mesela
-             SMEP/SMAP x86'nın özellikleri
+    Not: Bunlar işlemcinin sunduğu özelliklerle doğrudan alakalı; mesela
+         SMEP/SMAP x86'nın özellikleri
 
-        - Diğer: mmap_min_addr değişkeni (null ptr deref için çözüm).
-                 Eskiden bir program mmap(0,...) şeklinde 0 adresine kodunu
-                 yazsa ve kernelde bir null ptr dereference tetiklese kernel
-                 0 adresindeki shellcode'u çalıştırmaya başlarmış...
-                 mmap_min_addr limiti, mmap ile düşük adreslerin alınmasını
-                 engelliyor, NULL ptr deref hatalarının sömürülmesini
-                 oldukça zorlaştırıyor.
-
-    [-] Debugging
-
-        - Çoğu zaman crash dump'larına dayanacağız, bunlarda değerli
-          bilgiler olabiliyor (stack, register dumpları vs)
-        - Systemtap; scriptlerle kernel fonksiyonlarını hooklamayı
-          sağlıyor,debug sembolleri gerekiyor
-        - Netconsole; dmesg'in network tabanlı olanı, crash dumpları dmesg'e
-          basılmadan kernel çökebiliyor. Netconsole daha garanti
-        - Qemu ve vmware gdb arayüzü sağlıyormuş
-        - Virtualbox'u bilmiyorum
-        - Kernel derlenirken menuconfig üzerinden debug symbolleri ve pek
-          çok diğer debug seçeneği açılabiliyor
-        - Debug sembolleri sonradan paket olarak da indirilebiliyor
-        - NOT: Debug sembollü bir kernel'de geliştirilen exploit yüksek
-          ihtimalle standart kernelde çalışmaz (adres kaymaları vs.)
+    - Diğer: mmap_min_addr değişkeni (null ptr deref için çözüm).
+             Eskiden bir program mmap(0,...) şeklinde 0 adresine kodunu
+             yazsa ve kernelde bir null ptr dereference tetiklese kernel
+             0 adresindeki shellcode'u çalıştırmaya başlarmış...
+             mmap_min_addr limiti, mmap ile düşük adreslerin alınmasını
+             engelliyor, NULL ptr deref hatalarının sömürülmesini
+             oldukça zorlaştırıyor.
 
 
-    [-] Nerelerde zafiyetler var?
+----[8.5] Debugging
 
-        [~] LKM (Loadable Kernel Module)
-
-            En sık LKM'lerde (Loadable Kernel Module) bulunuyormuş.
-
-            LKM'ler, kernel space'de çalışan exe'ler gibi. Modül olduğu için
-            kernel çalışırken eklenebiliyor, çıkartılabiliyor vs. Tek başına
-            derlendikleri içın kernel'le beraber saatlerce derlenmesini
-            beklemenize de gerek yok, bu yüzden driver'ların belki de çoğu
-            LKM halinde bulunuyor.
-
-            [o] LKM'lerin kullanım alanları:
-                - Device drivers
-                - Filesystem drivers
-                - Networking drivers
-                - Executable interpreters
-                - Kernel extensions
-                - Rootkits (lol)
-
-            [o] LKM dosya yapısı
-
-                Linux için bildiğimiz ELF! Yani reverse yaparken userspace
-                için kullandığımız tool'ları kullanabiliyoruz.
-
-            [o] LKM'lerle çalışmak için komutlar
-
-                $ modprobe   # 'zekice' modülü kernele yükle/kaldır
-                $ insmod     # biraz uğraştırarak modülü yükle
-                $ rmmod      # modülü kaldır
-                $ lsmod      # yüklü modülleri listele
-
-    
+    - Çoğu zaman crash dump'larına dayanacağız, bunlarda değerli
+      bilgiler olabiliyor (stack, register dumpları vs)
+    - Systemtap; scriptlerle kernel fonksiyonlarını hooklamayı
+      sağlıyor,debug sembolleri gerekiyor
+    - Netconsole; dmesg'in network tabanlı olanı, crash dumpları dmesg'e
+      basılmadan kernel çökebiliyor. Netconsole daha garanti
+    - Qemu ve vmware gdb arayüzü sağlıyormuş
+    - Virtualbox'u bilmiyorum
+    - Kernel derlenirken menuconfig üzerinden debug symbolleri ve pek
+      çok diğer debug seçeneği açılabiliyor
+    - Debug sembolleri sonradan paket olarak da indirilebiliyor
+    - NOT: Debug sembollü bir kernel'de geliştirilen exploit yüksek
+      ihtimalle standart kernelde çalışmaz (adres kaymaları vs.)
 
 
+----[8.6] Nerelerde zafiyetler var?
+
+------[8.6.1] LKM (Loadable Kernel Module)
+
+    En sık LKM'lerde (Loadable Kernel Module) bulunuyormuş.
+
+    LKM'ler, kernel space'de çalışan exe'ler gibi. Modül olduğu için kernel
+    çalışırken eklenebiliyor, çıkartılabiliyor vs. Tek başına derlendikleri içın
+    kernel'le beraber saatlerce derlenmesini beklemenize de gerek yok, bu yüzden
+    driver'ların belki de çoğu LKM halinde bulunuyor.
 
 
-[-] Proc cheatsheet
+--------[8.6.1.1] LKM'lerin kullanım alanları:
+
+    - Device drivers
+    - Filesystem drivers
+    - Networking drivers
+    - Executable interpreters
+    - Kernel extensions
+    - Rootkits (lol)
+
+
+--------[8.6.1.2] LKM dosya yapısı
+
+    Linux için bildiğimiz ELF! Yani reverse yaparken userspace için
+    kullandığımız tool'ları kullanabiliyoruz.
+
+
+--------[8.6.1.3] LKM'lerle çalışmak için komutlar
+
+    $ modprobe   # 'zekice' modülü kernele yükle/kaldır
+    $ insmod     # biraz uğraştırarak modülü yükle
+    $ rmmod      # modülü kaldır
+    $ lsmod      # yüklü modülleri listele
+
+
+--[9] Proc cheatsheet
 
     $ grep "smep" /proc/cpuinfo
     $ grep "smap" /proc/cpuinfo
@@ -348,14 +437,15 @@
     $ cat /proc/cmdline # check if kaslr, kaiser or pti is enabled
 
 
-[-] Önemli kernel yapıları, fonksiyonlar vs. kernel v5.8 için sunulmuştur 
+--[10] Önemli kernel yapıları, fonksiyonlar vs. kernel v5.8 için sunulmuştur 
+  
     (K: blog.lexfo.fr). UYARİ: Kod parçalarında kırpmalar yapılmıştır.
 
 
-    [~] task_struct: "işlem"in tanımı
+----[10.1] task_struct: "işlem"in tanımı
 
-        Kendi exploit process'imizin yetkilerini root yapma isteyeceğimizden
-        bir process nasıl tanımlanıyor bilmeliyiz.
+    Kendi exploit process'imizin yetkilerini root yapma isteyeceğimizden bir
+    process nasıl tanımlanıyor bilmeliyiz.
 
         --------------------------------------------------------------------
         // include/linux/sched.h
@@ -410,11 +500,10 @@
         };
         --------------------------------------------------------------------
 
-        En çok "cred" alanı ilgimizi çekiyor zira işlemin yetkileri burada
-        tanımlı.
+    En çok "cred" alanı ilgimizi çekiyor zira işlemin yetkileri burada tanımlı.
 
 
-    [~] cred struct: işlemin yetkilerinin tanımı
+----[10.2] cred struct: işlemin yetkilerinin tanımı
 
         --------------------------------------------------------------------
         // include/linux/cred.h
@@ -447,21 +536,20 @@
         }
         --------------------------------------------------------------------
 
-        Kernel exploitlerin aşağı yukarı ortak amacı istenilen process'in
-        cred struct'unu bulup bu "kgid_t" tipindeki değişkenleri 0 (root)
-        yapmak oluyor.
+    Kernel exploitlerin aşağı yukarı ortak amacı istenilen process'in cred
+    struct'unu bulup bu "kgid_t" tipindeki değişkenleri 0 (root) yapmak oluyor.
 
-        Bunun dışında bu cred struct'ında 'capability'ler, 'namespace'ler
-        ve LSM'ye (Selinux, apparmor vs) ait tanımlamalar görüyoruz.
+    Bunun dışında bu cred struct'ında 'capability'ler, 'namespace'ler ve LSM'ye
+    (Selinux, apparmor vs) ait tanımlamalar görüyoruz.
 
 
-    [-] "current" makrosu: o anki koşan işleme pointer
+------[10.2.1] "current" makrosu: o anki koşan işleme pointer
 
-        current makrosu farklı mimariler için farklı şekilde çalışan, ama
-        asıl amacı çekirdekte o anki çalışan işleme işaret eden pointer
-        döndürmek olan sık rastlanan makro.
-    
-        x86 için:
+    current makrosu farklı mimariler için farklı şekilde çalışan, ama asıl amacı
+    çekirdekte o anki çalışan işleme işaret eden pointer döndürmek olan sık
+    rastlanan makro.
+
+    x86 için:
 
         --------------------------------------------------------------------
         // arch/x86/include/asm/current.h
@@ -476,26 +564,25 @@
         #define current get_current()
         --------------------------------------------------------------------
 
-        this_cpu_read_stable inline assembly ile yazılmış, current_task
-        değişkenine o anki çalışan işlemin task_struct'unun pointer'ını
-        döndüren bir makro.
+    this_cpu_read_stable inline assembly ile yazılmış, current_task değişkenine
+    o anki çalışan işlemin task_struct'unun pointer'ını döndüren bir makro.
 
 
-    [~] file, fdtable, files_struct: dosyalar
+----[10.3] file, fdtable, files_struct: dosyalar
 
-        "Linux'ta her şey dosyadır" sözünün manasını tam kavrayalım.
-        Temel olarak 7 dosya türü var:
-            1) Normal dosya (.txt falan)
-            2) Dizin
-            3) Link ("kısayol")
-            4) Character device (seri port, modem, ses, video, klavye..)
-            5) Block device (hdd vs.)
-            6) FIFO
-            7) Socket
+    "Linux'ta her şey dosyadır" sözünün manasını tam kavrayalım.  Temel olarak 7
+    dosya türü var:
+        1) Normal dosya (.txt falan)
+        2) Dizin
+        3) Link ("kısayol")
+        4) Character device (seri port, modem, ses, video, klavye..)
+        5) Block device (hdd vs.)
+        6) FIFO
+        7) Socket
 
-        File descriptor'lar özünde bir integer'dan ibaret; ve sadece ait
-        olduğu process için anlam taşıyor. Her fd'nin bağlantılı olduğu bir
-        "struct file" var.
+    File descriptor'lar özünde bir integer'dan ibaret; ve sadece ait olduğu
+    process için anlam taşıyor. Her fd'nin bağlantılı olduğu bir "struct file"
+    var.
 
         --------------------------------------------------------------------
         // include/linux/fs.h
@@ -521,9 +608,9 @@
         }
         --------------------------------------------------------------------
 
-        File descriptor bir integer demiştik (0=stdin, 1=stdout, 2=stderr,
-        3=dosya.txt, 4=...). Process için bu integerların karşılıklarındaki
-        "file" yapılarını eşleştiren tablo "fdtable".
+    File descriptor bir integer demiştik (0=stdin, 1=stdout, 2=stderr,
+    3=dosya.txt, 4=...). Process için bu integerların karşılıklarındaki "file"
+    yapılarını eşleştiren tablo "fdtable".
 
         --------------------------------------------------------------------
         // include/linux/fdtable.h
@@ -536,11 +623,10 @@
         };
         --------------------------------------------------------------------
 
-        Process'in kendisine ait fdtable "files_struct" türündeki struct'ta
-        tutuluyor (bkz: task_struct). Neden doğrudan "fdtable" olarak
-        tutmuyor derseniz; çünkü files_struct'ta process için gerekli
-        fazladan bilgiler de var ve derli toplu durmaları için böyle bir
-        wrapper yapmışlar sanıyorum.
+    Process'in kendisine ait fdtable "files_struct" türündeki struct'ta
+    tutuluyor (bkz: task_struct). Neden doğrudan "fdtable" olarak tutmuyor
+    derseniz; çünkü files_struct'ta process için gerekli fazladan bilgiler de
+    var ve derli toplu durmaları için böyle bir wrapper yapmışlar sanıyorum.
 
         --------------------------------------------------------------------
         // include/linux/fdtable.h
@@ -554,13 +640,13 @@
         --------------------------------------------------------------------
 
 
-    [~] Virtual function table (vft) yaklaşımı
+----[10.4] Virtual function table (vft) yaklaşımı
 
-        C ile yazılmış olsa da linux kerneli object-oriented bir kernel.
-        VFT'ler, kernele OOP'lik katan yaklaşımlardan. Kısaca, fonksiyon
-        pointer'ları tutan struct'lar.
+    C ile yazılmış olsa da linux kerneli object-oriented bir kernel.  VFT'ler,
+    kernele OOP'lik katan yaklaşımlardan. Kısaca, fonksiyon pointer'ları tutan
+    struct'lar.
 
-        En meşhur VFT'lerden biri "file_operations" struct'ı:
+    En meşhur VFT'lerden biri "file_operations" struct'ı:
 
         --------------------------------------------------------------------
         // include/linux/fs.h
@@ -578,9 +664,9 @@
         }
         --------------------------------------------------------------------
 
-        Her şeyin dosya olduğu ama dosyaların farklı farklı biçimlerde
-        olduğu (soket, dosya, dizin vb...) linux'da vft yaklaşımıyla mesela
-        dosya okuma işlemleri "generic"lik kazanarak şu hale geliyor:
+    Her şeyin dosya olduğu ama dosyaların farklı farklı biçimlerde olduğu
+    (soket, dosya, dizin vb...) linux'da vft yaklaşımıyla mesela dosya okuma
+    işlemleri "generic"lik kazanarak şu hale geliyor:
 
         --------------------------------------------------------------------
             // soket için de, dizin için de, dosya için de...
@@ -588,20 +674,19 @@
                 ret = file->f_op->read(file, buf, count, pos);
         --------------------------------------------------------------------
         
-        Çünkü her dosyanın "f_op"sundaki fonksiyon pointer'ları kendi
-        türünün özel fonksiyonlarına işaret ediyor.
+    Çünkü her dosyanın "f_op"sundaki fonksiyon pointer'ları kendi türünün özel
+    fonksiyonlarına işaret ediyor.
 
-        Kernel exploitlerinde fonksiyon pointer'ları ile oyunlar yapmak çok
-        sık başvurulan bir yöntem olduğu için (mesela UAF) bu yapıyı da
-        bilelim.
+    Kernel exploitlerinde fonksiyon pointer'ları ile oyunlar yapmak çok sık
+    başvurulan bir yöntem olduğu için (mesela UAF) bu yapıyı da bilelim.
 
 
-    [~] socket, sock, skb: ağ
+----[10.5] socket, sock, skb: ağ
 
-        socket(2) syscall'ı ile yeni bir soket oluşturunca, kernel bizim
-        için bir "struct file" oluşturur ve "f_op" alanını "socket_file_ops"
-        olarak ayarlar. Özünde dosya oldukları için de klasik open(2),
-        write(2) gibi syscall'larla çalışırlar.
+    socket(2) syscall'ı ile yeni bir soket oluşturunca, kernel bizim için bir
+    "struct file" oluşturur ve "f_op" alanını "socket_file_ops" olarak ayarlar.
+    Özünde dosya oldukları için de klasik open(2), write(2) gibi syscall'larla
+    çalışırlar.
 
         --------------------------------------------------------------------
         // net/socket.h
@@ -646,18 +731,16 @@
         }
         --------------------------------------------------------------------
 
-        Burada ne görüyoruz: socket struct'ı, file stuct'ı için bir
-        "wrapper" olarak yazılmış. socket->file->f_op şeklinde open, close
-        işlemlerine erişildiği gibi ayrıca özünde BSD socket API'sinin
-        gerçeklemesi olduğundan, proto_ops ile socket'in bind, release gibi
-        BSD çıkışlı fonksiyonları da gerçeklenmiş.
+    Burada ne görüyoruz: socket struct'ı, file stuct'ı için bir "wrapper" olarak
+    yazılmış. socket->file->f_op şeklinde open, close işlemlerine erişildiği
+    gibi ayrıca özünde BSD socket API'sinin gerçeklemesi olduğundan, proto_ops
+    ile socket'in bind, release gibi BSD çıkışlı fonksiyonları da gerçeklenmiş.
 
-        struct socket, yine de bir "dosya" türü olarak tasarlandığından
-        "high-level" bir yapı olarak sayılabilir. Fakat sıradan dosyalardan
-        farklı olarak soketler network kartına gidip okuma/yazma işlemleri
-        yaparlar; bu gibi low-level işlemler için struct socket'in içinde
-        bir de "struct sock" diye bir veri yapısına pointer var. sock'da
-        daha detaylı işler dönüyor:
+    struct socket, yine de bir "dosya" türü olarak tasarlandığından "high-level"
+    bir yapı olarak sayılabilir. Fakat sıradan dosyalardan farklı olarak
+    soketler network kartına gidip okuma/yazma işlemleri yaparlar; bu gibi
+    low-level işlemler için struct socket'in içinde bir de "struct sock" diye
+    bir veri yapısına pointer var. sock'da daha detaylı işler dönüyor:
 
         --------------------------------------------------------------------
         // include/net/sock.h
@@ -678,11 +761,11 @@
         };
         --------------------------------------------------------------------
 
-        Mesela ağ üzerinden bir paket gelince, ağ kartının sürücüsü bunu
-        sk_receive_queue'ya alır, bir program recvmsg(2) syscall'ını
-        çağırana kadar o queue'da kalır o paket.
+    Mesela ağ üzerinden bir paket gelince, ağ kartının sürücüsü bunu
+    sk_receive_queue'ya alır, bir program recvmsg(2) syscall'ını çağırana kadar
+    o queue'da kalır o paket.
 
-        Bu paketler ise, sk_buff'lardır (kısaca skb):
+    Bu paketler ise, sk_buff'lardır (kısaca skb):
 
         --------------------------------------------------------------------
         // include/linux/skbuff.h
@@ -725,13 +808,13 @@
         };
         --------------------------------------------------------------------
 
-        struct sock'un içindeki queue'larda tutulan sk_buff'un içinde temel
-        network terimlerini görmeye başladık. Ayrıca *data pointerını
-        görüyoruz. Sonunda veriye ulaştık yani!
+    struct sock'un içindeki queue'larda tutulan sk_buff'un içinde temel network
+    terimlerini görmeye başladık. Ayrıca *data pointerını görüyoruz. Sonunda
+    veriye ulaştık yani!
 
-        Yukarıdaki veri yapılarının her birinde bir üst ve bir alt katmana
-        işaret eden pointerlar mevcut. Bu katmanlar OSI katmanları DEĞİL!
-        Kernel'in katmanları. Özet diyagramı:
+    Yukarıdaki veri yapılarının her birinde bir üst ve bir alt katmana işaret
+    eden pointerlar mevcut. Bu katmanlar OSI katmanları DEĞİL!  Kernel'in
+    katmanları. Özet diyagramı:
 
                   +-----------------------------------+
                   |   struct file {                   | 
@@ -767,12 +850,11 @@
                 isimlendirilirler.
 
 
-    [~] netlink_sock: IPC için özel soket
+----[10.6] netlink_sock: IPC için özel soket
 
-        socket'ler sadece network işleri için kullanılmıyorlar.
-        Özelleştirilmiş bir socket olan netlink_sock, inter process
-        communication'da kullanılıyor. Ayrıca kernel ve userspace arası
-        haberleşme için de kullanılıyor.
+    socket'ler sadece network işleri için kullanılmıyorlar.  Özelleştirilmiş bir
+    socket olan netlink_sock, inter process communication'da kullanılıyor.
+    Ayrıca kernel ve userspace arası haberleşme için de kullanılıyor.
         
         --------------------------------------------------------------------
         // net/netlink/netlink_sock.h
@@ -788,12 +870,12 @@
         };
         --------------------------------------------------------------------
 
-        Yorum satırına dikkat! İlk elemanın "struct sock" olması ne işe
-        yarar dersiniz? C dilinde type polymorphism bu şekilde yapılıyormuş.
-        &netlink_sock == &netlink_sock.sk oluyor ve bunlardan birini "free"
-        etmek, bir diğerinin free olması anlamına geliyor.
-        
-        Tabii netlink için socket'in özelleştirilmiş proto_ops'a gereği var:
+    Yorum satırına dikkat! İlk elemanın "struct sock" olması ne işe yarar
+    dersiniz? C dilinde type polymorphism bu şekilde yapılıyormuş.
+    &netlink_sock == &netlink_sock.sk oluyor ve bunlardan birini "free" etmek,
+    bir diğerinin free olması anlamına geliyor.
+    
+    Tabii netlink için socket'in özelleştirilmiş proto_ops'a gereği var:
 
         --------------------------------------------------------------------
         // net/netlink/af_netlink.c
@@ -810,7 +892,7 @@
         --------------------------------------------------------------------
 
 
-    [~] Hepsi bir arada: current, task_struct, files_struct, fdtable,
+----[10.7] Hepsi bir arada: current, task_struct, files_struct, fdtable,
                          file. socket, sock, sk_buff, socket_file_ops, 
                          netlink_sock, netlink_ops
 
@@ -844,24 +926,22 @@
       .                      .
       .                      .
 
-                        Şekil: Hepsi bir arada (oklar pointer)
-                               Pointer isimlerinin hepsi yazilmadı
+                    Şekil: Hepsi bir arada (oklar pointer)
+                           Pointer isimlerinin hepsi yazilmadı
 
 
-    [~] Reference counter kavramı
+----[10.8] Reference counter kavramı
 
-        C ile yazıldığı için kernelde use-after-free gibi hatalara yer
-        vermemek ve bellek sızdırmamak geliştiricilerin sorumluluğunda.
-        Bunun için refcounting yaklaşımı geliştirilmiş. Kısaca, bellekteki
-        bir objeye eriştiğiniz zaman (mesela socket olsun), refcount'u 1
-        arttırılıyor. Kullanım bitince de 1 azaltılıyor. Refcount 0 olduğu
-        an obje otomatik siliniyor (free).
+    C ile yazıldığı için kernelde use-after-free gibi hatalara yer vermemek ve
+    bellek sızdırmamak geliştiricilerin sorumluluğunda.  Bunun için refcounting
+    yaklaşımı geliştirilmiş. Kısaca, bellekteki bir objeye eriştiğiniz zaman
+    (mesela socket olsun), refcount'u 1 arttırılıyor. Kullanım bitince de 1
+    azaltılıyor. Refcount 0 olduğu an obje otomatik siliniyor (free).
 
-        Ha tabii, c++'daki gibi smart pointer kavramı olmadığı için tüm bu
-        refcount arttırma ve düşürme işlemleri, o objeye erişen kodu 
-        geliştiren kişi tarafından elle yapılmalı. Bir socket objesi
-        kullanacaksanız, o socket'in refcount'unu (helper fonksiyonlar ile)
-        arrtırmalısınız. Mesela:
+    Ha tabii, c++'daki gibi smart pointer kavramı olmadığı için tüm bu refcount
+    arttırma ve düşürme işlemleri, o objeye erişen kodu geliştiren kişi
+    tarafından elle yapılmalı. Bir socket objesi kullanacaksanız, o socket'in
+    refcount'unu (helper fonksiyonlar ile) arrtırmalısınız. Mesela:
 
         --------------------------------------------------------------------
         static __always_inline void __sock_put(struct sock *sk)
@@ -870,57 +950,35 @@
         }
         --------------------------------------------------------------------
 
-        Bu arttırma ve azaltma işlemlerini "generic"leştirmek için
-        girişimlerde bulunulmuş olsa da (kref, kobject gibi) genelde her
-        yapı kendi refcount sistemini kurmuş durumda. Referans almak (taking
-        a reference == ref++) _get()'imsi helper'larla, referans bırakmak
-        ise (dropping a reference == ref--) _put()'umsu helper
-        fonksiyonlarla sağlanıyor.
+    Bu arttırma ve azaltma işlemlerini "generic"leştirmek için girişimlerde
+    bulunulmuş olsa da (kref, kobject gibi) genelde her yapı kendi refcount
+    sistemini kurmuş durumda. Referans almak (taking a reference == ref++)
+    _get()'imsi helper'larla, referans bırakmak ise (dropping a reference ==
+    ref--) _put()'umsu helper fonksiyonlarla sağlanıyor.
 
-        Yukarıdaki veri yapılarında da görülebileceği gibi, refcount, count,
-        usage gibi farklı farklı isimlendirmeler var. Helper fonksiyonlar
-        için de farklı isimler var:
+    Yukarıdaki veri yapılarında da görülebileceği gibi, refcount, count, usage
+    gibi farklı farklı isimlendirmeler var. Helper fonksiyonlar için de farklı
+    isimler var:
 
-            struct sock         : sock_hold(), sock_put()
-            struct file         : fget(), fput()
-            struct files_struct : get_files_struct(), put_files_struct()
+        struct sock         : sock_hold(), sock_put()
+        struct file         : fget(), fput()
+        struct files_struct : get_files_struct(), put_files_struct()
 
-        gibi.
+    gibi.
 
-        Ama mesela skbuff'ların skb_put() fonksiyonunun refcountingle
-        alakası yok. Kernel'da isimlendirmelere bakıp da içerik hakkında
-        tahminde bulunma; git ne iş yapıyor bak!
+    Ama mesela skbuff'ların skb_put() fonksiyonunun refcountingle alakası yok.
+    Kernel'da isimlendirmelere bakıp da içerik hakkında tahminde bulunma; git ne
+    iş yapıyor bak!
 
-        Hülasa; elle yapılan bir refcount arttırma azaltma söz konusu
-        olunca, karışık "path"lerde programcı hatalarından kaynaklı UAF'ler,
-        double free'ler, integer overflow'lar (ve buna bağlı UAF'ler)
-        kernelin her yerinde karşımıza çıkabilir.
+    Hülasa; elle yapılan bir refcount arttırma azaltma söz konusu olunca,
+    karışık "path"lerde programcı hatalarından kaynaklı UAF'ler, double
+    free'ler, integer overflow'lar (ve buna bağlı UAF'ler) kernelin her yerinde
+    karşımıza çıkabilir.
 
-    [~] Task state
-    [~] Run queues
-    [~] Wait queues
-    [~] Waking up tasks
-    [~] Memory, SLAB https://www.kernel.org/doc/gorman/html/understand/understand011.html
-    [~] Cache and slab
-    [~] Per-cpu array cache
-    [~] General purpose and dedicated caches
-    [~] container_of() macro
-    [~] Doubly-linked lists: list_for_each, list_for_each_safe,
-        list_for_each_entry, list_for_each_entry_safe
-    [~] UAF and Type confusion: cache vs., UAF tricks, reallocation gadgets
-    [~] Detecting object sizes: 5 methods
-    [~] Mimicking kernel data structures in userspace
-    [~] struct thread_info: addr_limit, set_fs()
-    [~] seccomp and escaping seccomp
-    [~] __user macro
-    [~] execve() --> start_stread()
-    [~] virtual memory map
-    [~] kernel thread stacks
-    [~] SMEP: ret2usr sonu
-    [~] ret2dir
-    [~] Understanding page fault trace
 
-        Rootkitimizi insmod yaptık ve oops!
+----[10.9] Understanding page fault trace
+
+    Rootkitimizi insmod yaptık ve oops!
        
         --------------------------------------------------------------------
         / # insmod wootkit
@@ -956,7 +1014,7 @@
         --------------------------------------------------------------------
 
 
-        "Oops" kodlarımız:
+    "Oops" kodlarımız:
 
         --------------------------------------------------------------------
         // arch/x86/include/asm/traps.h
@@ -981,297 +1039,724 @@
         };
         --------------------------------------------------------------------
 
-        Örnekteki 0003 == X86_PF_PROT | X86_PF_WRITE;
+    Örnekteki 0003 == X86_PF_PROT | X86_PF_WRITE;
 
 
-    [~] ROP in kernelspace
-    [~] Stack pivoting
-    [~] Debugging kernel w/ gdb
-    [~] getting root
-
-
-
-[+] Kernel'in bellek yönetimi
+--[11] Kernel'in bellek yönetimi
 
     Kernel'in en kritik görevlerinden biri belleği hızlı, güvenli, stabil ve
     "fragmentation" en az olacak şekilde yönetmesidir.
 
-    Burada mmap başlığı dahil "LDD3 - Chapter 15, Memory Mapping and DMA"den
+    Burada mmap başlığı dahil "LDD3 - Chapter 15, Memory Mapping and DMA'den
     alıntılar var. (http://static.lwn.net/images/pdf/LDD3/ch15.pdf)
 
-    [-] List of address types used in Linux
+----[11.1] List of address types used in Linux
 
-        [o] User virtual addresses
+------[11.1.1] User virtual addresses
 
-            These are the regular addresses seen by user-space programs.
-            User addresses are either 32 or 64 bits in length, depending on
-            the underlying hardware architecture, and each process has its
-            own virtual address space.
+    These are the regular addresses seen by user-space programs.  User addresses
+    are either 32 or 64 bits in length, depending on the underlying hardware
+    architecture, and each process has its own virtual address space.
 
-        [o] Physical addresses
+------[11.1.2] Physical addresses
 
-            The addresses used between the processor and the system's
-            memory. Physical addresses are 32- or 64-bit quantities; even
-            32-bit systems can use larger physical addresses in some
-            situations.
+    The addresses used between the processor and the system's memory. Physical
+    addresses are 32- or 64-bit quantities; even 32-bit systems can use larger
+    physical addresses in some situations.
 
-        [o] Bus addresses
+------[11.1.3] Bus addresses
 
-            The addresses used between peripheral buses and memory. Often,
-            they are the same as the physical addresses used by the
-            processor, but that is not necessarily the case. Some
-            architectures can provide an I/O memory management unit (IOMMU)
-            that remaps addresses between a bus and main memory. An IOMMU
-            can make life easier in a number of ways (making a buffer
-            scattered in memory appear contiguous to the device for
-            example), but programming the IOMMU is an extra step that must
-            be performed when setting up DMA operations. Bus addresses are
-            highly architecture dependent, of course.
+    The addresses used between peripheral buses and memory. Often, they are the
+    same as the physical addresses used by the processor, but that is not
+    necessarily the case. Some architectures can provide an I/O memory
+    management unit (IOMMU) that remaps addresses between a bus and main memory.
+    An IOMMU can make life easier in a number of ways (making a buffer scattered
+    in memory appear contiguous to the device for example), but programming the
+    IOMMU is an extra step that must be performed when setting up DMA
+    operations. Bus addresses are highly architecture dependent, of course.
 
-        [o] Kernel logical addresses
+------[11.1.4] Kernel logical addresses
 
-            These make up the normal address space of the kernel. These
-            addresses map some portion (perhaps all) of main memory and are
-            often treated as if they were physical addresses. On most
-            architectures, logical addresses and their associated physical
-            addresses differ only by a constant offset. Logical addresses
-            use the hardware's native pointer size and, therefore, may be
-            unable to address all of physical memory on heavily equipped
-            32-bit systems. Logical addresses are usually stored in
-            variables of type unsigned long or void *. Memory returned from
-            kmalloc has a kernel logical address.
+    These make up the normal address space of the kernel. These addresses map
+    some portion (perhaps all) of main memory and are often treated as if they
+    were physical addresses. On most architectures, logical addresses and their
+    associated physical addresses differ only by a constant offset. Logical
+    addresses use the hardware's native pointer size and, therefore, may be
+    unable to address all of physical memory on heavily equipped 32-bit systems.
+    Logical addresses are usually stored in variables of type unsigned long or
+    void *. Memory returned from kmalloc has a kernel logical address.
 
-        [o] Kernel virtual addresses
+------[11.1.5] Kernel virtual addresses
 
-            Kernel virtual addresses are similar to logical addresses in
-            that they are a mapping from a kernel-space address to a
-            physical address. Kernel virtual addresses do not necessarily
-            have the linear, one-to-one mapping to physical addresses that
-            characterize the logical address space, however. All logical
-            addresses are kernel virtual addresses, but many kernel virtual
-            addresses are not logical addresses. For example, memory
-            allocated by vmalloc has a virtual address (but no direct
-            physical mapping). The kmap function (described later in this
-            chapter) also returns virtual addresses. Virtual addresses are
-            usually stored in pointer variables.
+    Kernel virtual addresses are similar to logical addresses in that they are a
+    mapping from a kernel-space address to a physical address. Kernel virtual
+    addresses do not necessarily have the linear, one-to-one mapping to physical
+    addresses that characterize the logical address space, however. All logical
+    addresses are kernel virtual addresses, but many kernel virtual addresses
+    are not logical addresses. For example, memory allocated by vmalloc has a
+    virtual address (but no direct physical mapping). The kmap function
+    (described later in this chapter) also returns virtual addresses. Virtual
+    addresses are usually stored in pointer variables.
 
 
-    [-] High and Low Memory
+----[11.2] High and Low Memory
 
-        [o] Low memory
+------[11.2.1] Low memory
 
-            Memory for which logical addresses exist in kernel space. On
-            almost every system you will likely encounter, all memory is
-            low memory.
+    Memory for which logical addresses exist in kernel space. On almost every
+    system you will likely encounter, all memory is low memory.
 
-        [o] High memory
+------[11.2.2] High memory
 
-            Memory for which logical addresses do not exist, because it is
-            beyond the address range set aside for kernel virtual addresses.
-
-
-    [-] Page Tables
-
-        On any modern system, the processor must have a mechanism for
-        translating virtual addresses into its corresponding physical
-        addresses. This mechanism is called a page table; it is essentially
-        a multilevel tree-structured array containing virtual-to-physical
-        mappings and a few associated flags. The Linux kernel maintains a
-        set of page tables even on architectures that do not use such tables
-        directly.
+    Memory for which logical addresses do not exist, because it is beyond the
+    address range set aside for kernel virtual addresses.
 
 
-    [-] Virtual Memory Areas
+----[11.3] Page Tables
 
-        The virtual memory area (VMA) is the kernel data structure used to
-        manage distinct regions of a process's address space. A VMA
-        represents a homogeneous region in the virtual memory of a process:
-        a contiguous range of virtual addresses that have thesame permission
-        flags and are backed up by the same object (a file, say, or
-        swapspace). It corresponds loosely to the concept of a "segment",
-        although it is better described as "a memory object with its own
-        properties." The memory map of a process is made up of (at least)
-        the following areas:
-
-            • An area for the program's executable code (often called text)
-            • Multiple areas for data, including initialized data (that 
-              which has an explicitly assigned value at the beginning of
-              execution), uninitialized data (BSS), and the program stack
-            • One area for each active memory mapping
-
-        $ cat /proc/<pid/maps> # vmmap per pid
-        $ cat /proc/self/maps  # caller proceses's vmmap
+    On any modern system, the processor must have a mechanism for translating
+    virtual addresses into its corresponding physical addresses. This mechanism
+    is called a page table; it is essentially a multilevel tree-structured array
+    containing virtual-to-physical mappings and a few associated flags. The
+    Linux kernel maintains a set of page tables even on architectures that do
+    not use such tables directly.
 
 
-            00400000-00405000   r-xp   00000000 03:01 1596291     /bin/cat
-               ^         ^       ^        ^      ^  ^   ^            ^
-            va start  va end   perm     offset  major  inode       image
-                              p=priv    (from    minor
-                              s=shared  image
-                                        start)
+----[11.4] Virtual Memory Areas
+
+    The virtual memory area (VMA) is the kernel data structure used to manage
+    distinct regions of a process's address space. A VMA represents a
+    homogeneous region in the virtual memory of a process: a contiguous range of
+    virtual addresses that have thesame permission flags and are backed up by
+    the same object (a file, say, or swapspace). It corresponds loosely to the
+    concept of a "segment", although it is better described as "a memory object
+    with its own properties." The memory map of a process is made up of (at
+    least) the following areas:
+
+        • An area for the program's executable code (often called text)
+        • Multiple areas for data, including initialized data (that 
+          which has an explicitly assigned value at the beginning of
+          execution), uninitialized data (BSS), and the program stack
+        • One area for each active memory mapping
+
+    $ cat /proc/<pid/maps> # vmmap per pid
+    $ cat /proc/self/maps  # caller proceses's vmmap
 
 
-    [-] The mmap Device Operation
+        00400000-00405000   r-xp   00000000 03:01 1596291     /bin/cat
+           ^         ^       ^        ^      ^  ^   ^            ^
+        va start  va end   perm     offset  major  inode       image
+                          p=priv    (from    minor
+                          s=shared  image
+                                    start)
 
-        Memory mapping is one of the most interesting features of modern
-        Unix systems. Asfar as drivers are concerned, memory mapping can be
-        implemented to provide user programs with direct access to device
-        memory.
 
-        The kernel can manage virtual addresses only at the level of page 
-        tables the mapped area must be amultiple of PAGE_SIZE and must live
-        in physical memory starting at an address that is a multiple of
-        PAGE_SIZE (usually 4096).
+----[11.5] The mmap Device Operation
 
-        Device driver developer must implement mmap interface himself for 
-        supporting mmap operations.
+    Memory mapping is one of the most interesting features of modern Unix
+    systems. Asfar as drivers are concerned, memory mapping can be implemented
+    to provide user programs with direct access to device memory.
+
+    The kernel can manage virtual addresses only at the level of page tables the
+    mapped area must be a multiple of PAGE_SIZE and must live in physical memory
+    starting at an address that is a multiple of PAGE_SIZE (usually 4096).
+
+    Device driver developer must implement mmap interface himself for supporting
+    mmap operations.
 
         $ cat /proc/<pid/maps> | grep /dev/mem
         $ cat /proc/iomem
 
 
-    [-] Allocators
+----[11.6] Allocators
 
-        Kernel'de belli başlı allocatorlar ile yapılıyor bellek işlemleri.
-        Biz malloc()'la falan bir bellek istediğimizde kernel gidiyor en
-        uygun, en kopukluk olmayacak fiziksel bölgeyi sanal bellek alanına
-        "map"liyor. Bu bölgelere ait bilgiler "struct page"lerde saklanıyor
-        (free mi değil mi vs.).
+    Kernel'de belli başlı allocatorlar ile yapılıyor bellek işlemleri.  Biz
+    malloc()'la falan bir bellek istediğimizde kernel gidiyor en uygun, en
+    kopukluk olmayacak fiziksel bölgeyi sanal bellek alanına "map"liyor. Bu
+    bölgelere ait bilgiler "struct page"lerde saklanıyor (free mi değil mi vs.).
 
-        Bu yönetimi yapan farklı farklı allocator'lar geliştirilmiş; ve
-        exploit edilecek sistemde hangisi varsa onun detayını bilmek
-        elzemmiş (tıpkı userspace heap implementasyonları gibi).
+    Bu yönetimi yapan farklı farklı allocator'lar geliştirilmiş; ve exploit
+    edilecek sistemde hangisi varsa onun detayını bilmek elzemmiş (tıpkı
+    userspace heap implementasyonları gibi).
 
-        Zoned page frame allocator (buddy allocator)
-        --------------------------------------------
-            alloc_pages() ve free_pages() çağrılarına bakan, 'buddy system
-            algorithm' kullanan, genel bir allocator.
+------[11.6.1] Zoned page frame allocator (buddy allocator)
 
-        Slab allocators
-        ---------------
-            Buddy çok genel kalıyormuş, daha özelleştirilmiş algoritmalara
-            ihtiyaç duyulmuş zamanla. Daha ince ayarlı allocator sistemi
-            olarak slab'ler geliştirilmiş. Mesela 128B bellek istiyoruz,
-            buddy'de mecbur PAGE_SIZE'lık alan ayrılırmış ama Slab'ler daha
-            ufak ayırmalar yapabiliyor. Kısaca çoğu zaman Slab'le haşır
-            neşir oluyoruz. Kernelde 3 farklı Slab gerçeklemesi var 
-            (sadece 1'i aktif):
-            
-            1- SLAB: Geleneksel ve eski, cache optimizasyonlarına odaklı,
-                     Debian hala bunu kullanıyormuş. UAF exploitleri SLUB'a
-                     göre daha kolay. İyi dökümante edilmiş.
-            2- SLUB: 2007'den beri yeni standart bu, Ubuntu, CentOS, Android
-                     Bunu exploit etmenin ise 'slab aliasing' diye bir
-                     kolaylığı varmış: SLUB general kmemcache'lerde daha
-                     fazla obje saklıyor. İyi dökümante edilmemiş ???? TODO
-                     fakat anlaması SLAB'e göre daha kolaymış (SLAB'deki
-                     gibi "cache coloring", "full slab" takibi,
-                     internal/external slab yönetimi falan yokmuş).
-            3- SLOB: Çok ufak hafızalı gömülü sistemler için tasarlanmış
+    alloc_pages() ve free_pages() çağrılarına bakan, 'buddy system algorithm'
+    kullanan, genel bir allocator.
 
-            (Bunların her birine genel olarak "Slab" deniliyor)
-            
-            Sistemde hangisi aktif bakmak için:
-            ----------------------------------------------------------------
-            $ grep "CONFIG_SL.B=" /boot/config-$(uname -r)
+------[11.6.2] Slab allocators
 
-            # ya da
+    Buddy çok genel kalıyormuş, daha özelleştirilmiş algoritmalara ihtiyaç
+    duyulmuş zamanla. Daha ince ayarlı allocator sistemi olarak slab'ler
+    geliştirilmiş. Mesela 128B bellek istiyoruz, buddy'de mecbur PAGE_SIZE'lık
+    alan ayrılırmış ama Slab'ler daha ufak ayırmalar yapabiliyor. Kısaca çoğu
+    zaman Slab'le haşır neşir oluyoruz. Kernelde 3 farklı Slab gerçeklemesi var
+    (sadece 1'i aktif):
+    
+    1- SLAB: Geleneksel ve eski, cache optimizasyonlarına odaklı,
+             Debian hala bunu kullanıyormuş. UAF exploitleri SLUB'a
+             göre daha kolay. İyi dökümante edilmiş.
+    2- SLUB: 2007'den beri yeni standart bu, Ubuntu, CentOS, Android
+             Bunu exploit etmenin ise 'slab aliasing' diye bir
+             kolaylığı varmış: SLUB general kmemcache'lerde daha
+             fazla obje saklıyor. İyi dökümante edilmemiş ???? TODO
+             fakat anlaması SLAB'e göre daha kolaymış (SLAB'deki
+             gibi "cache coloring", "full slab" takibi,
+             internal/external slab yönetimi falan yokmuş).
+    3- SLOB: Çok ufak hafızalı gömülü sistemler için tasarlanmış
 
-            $ cat /proc/slabinfo  # eğer "size-XXX li cache'ler varsa SLAB
-                                  # "kmalloc-XXX li cache'ler varsa SLUB
-            ----------------------------------------------------------------
+    (Bunların her birine genel olarak "Slab" deniliyor)
+    
+    Sistemde hangisi aktif bakmak için:
+    ----------------------------------------------------------------
+    $ grep "CONFIG_SL.B=" /boot/config-$(uname -r)
 
-            Ayrıca cache'ler var ve bunlara (küçük harfle) slab deniliyor.
-            Kısaca bir slab bir veya birden çok sürekli page frame'i demek.
+    # ya da
+
+    $ cat /proc/slabinfo  # eğer "size-XXX li cache'ler varsa SLAB
+                          # "kmalloc-XXX li cache'ler varsa SLUB
+    ----------------------------------------------------------------
+
+    Ayrıca cache'ler var ve bunlara (küçük harfle) slab deniliyor.
+    Kısaca bir slab bir veya birden çok sürekli page frame'i demek.
 
 
-        [o] İsimlendirme
+------[11.6.3] İsimlendirme
            
-            SLAB: algoritma
-            Slab: yöntemlerden biri (SLAB/SLUB/SLOB)
-            slab: sürekli bellek alanı, PAGE_SIZE veya katları boyutunda
+    SLAB: algoritma
+    Slab: yöntemlerden biri (SLAB/SLUB/SLOB)
+    slab: sürekli bellek alanı, PAGE_SIZE veya katları boyutunda
         
 
-        [~] Cache
+--------[11.6.3.1] Cache
 
-            Kernel, tekrar tekrar aynı büyüklükte obje oluşturmaya meyilli
-            olduğundan; Slab'lerin yönettiği cache mekanizmaları
-            oluşturulmuş. Kısaca çeşitli boyutlarda pek çok cache var ve
-            yeni oluşturulan obje hangisine en iyi oturuyorsa ona konuluyor.
+    Kernel, tekrar tekrar aynı büyüklükte obje oluşturmaya meyilli olduğundan;
+    Slab'lerin yönettiği cache mekanizmaları oluşturulmuş. Kısaca çeşitli
+    boyutlarda pek çok cache var ve yeni oluşturulan obje hangisine en iyi
+    oturuyorsa ona konuluyor.
 
-            NOT: Bu cache'ler CPU cache'leri değil. Bunlar yine bellekte.
+    NOT: Bu cache'ler CPU cache'leri değil. Bunlar yine bellekte.
 
-            Cache descriptor olan "struct kmem_cache":
-            ----------------------------------------------------------------
-            // include/linux/slab_def.h
+    Cache descriptor olan "struct kmem_cache":
+        ----------------------------------------------------------------
+        // include/linux/slab_def.h
 
-            /*
-             * Definitions unique to the original Linux SLAB allocator.
-             */
+        /*
+         * Definitions unique to the original Linux SLAB allocator.
+         */
 
-            struct kmem_cache {
-                    struct array_cache __percpu *cpu_cache;
-                    unsigned int num;		/* # of objs per slab */
+        struct kmem_cache {
+                struct array_cache __percpu *cpu_cache;
+                unsigned int num;		/* # of objs per slab */
 
-                    /* order of pgs per slab (2^n) */
-                    unsigned int gfporder;
+                /* order of pgs per slab (2^n) */
+                unsigned int gfporder;
 
-                    struct kmem_cache *freelist_cache;
-                    unsigned int freelist_size;
+                struct kmem_cache *freelist_cache;
+                unsigned int freelist_size;
 
-                    /* constructor func */
-                    void (*ctor)(void *obj);
+                /* constructor func */
+                void (*ctor)(void *obj);
 
-                    const char *name;
-                    int refcount;
+                const char *name;
+                int refcount;
 
-            #ifdef CONFIG_KASAN
-                    struct kasan_cache kasan_info;
-            #endif
+        #ifdef CONFIG_KASAN
+                struct kasan_cache kasan_info;
+        #endif
 
-                    // GALİBA: holds list of empty/partial/full slabs
-                    struct kmem_cache_node *node[MAX_NUMNODES];
+                // GALİBA: holds list of empty/partial/full slabs
+                struct kmem_cache_node *node[MAX_NUMNODES];
 
-                    // ...
-            };
-            ----------------------------------------------------------------
-
-
-        [~] slab
-
-            Küçük harfle "slab", sürekli bellek alanı, PAGE_SIZE veya
-            katları boyutunda demiştik.
-
-            TODO Hey 5.8'de yok
-
-            ----------------------------------------------------------------
-
-            ----------------------------------------------------------------
+                // ...
+        };
+        ----------------------------------------------------------------
 
 
+--------[11.6.3.2] slab
+
+    Küçük harfle "slab", sürekli bellek alanı, PAGE_SIZE veya katları boyutunda
+    demiştik.
+
+    TODO Hey 5.8'de yok
 
 
+--[12] Kernel'in bellek yönetimi 2 - Tanenbaum: Modern Operating Systems 2014 ch 3
+
+----[12.1] Model 1: Memory abstraction yok
+
+        Tüm programlar doğrudan fiziksel adreslere erişiyor. Tabii riskli şeyler
+        ortaya çıkıyor (userspace program kerneli bozuyor falan). Aynı anda iki
+        program çalışması için mimarlar taklalar atıyor. Eski bilgisayarlar
+        böyleydi. Şu an embedded sistemlerde hala boyle olanlar var.
 
 
+----[12.2] Model 2: Base ve limit register'ları ile memory abstraction
 
-[-] Random notes to put somewhere in the note
+        Abstraction'dan kasıt, her programın ayrı bir adres uzayına sahip
+        olduğunu düşünmesini sağlamak.
 
-    KASLR -> KAISER -> PTI
-    ----------------------
+        İlk abstraction modeli, CPU'ya base ve limit adında iki register eklemek
+        olmuş (CDC 6600). Her bellek erişimine base'deki değer ekleniyormuş ve
+        erişimin limit'ten küçük olması gerekiyormuş. base register'inda o
+        programın bellekteki fiziksel adresi tutuluyor, ve her bellek erişiminde
+        base değeri adrese ekleniyormuş. limit'te de programın boyutu
+        tutuluyormuş ve limit'ten dışarı erişimler engelleniyormuş.
+
+        Intel 8088'de birden çok base registerı varmış ama hiç limit register'ı
+        yokmuş, bu yüzden programlar adres uzaylarının dışına erişebiliyormuş.
+
+
+----[12.3] Swapping
+
+        Kullanılmayan programın belleğini diske kaydet, kullanılacağı zaman geri
+        yükle.
+
+
+----[12.4] Boş belleğin yönetimi
+
+------[12.4.1] bitmap ile
+
+    Eskiden bitmapler varmış. Belleğin bir yerinde duran bu bitmap, belirli
+    boyuttaki chunk'ların dolu veya boş olduğunu tüm hafıza için tutuyormuş (1
+    ve 0). Tabii yer kaplıyor ve kullanması yavaş.
+
+------[12.4.2] linked list ile
+
+    Sonra belleğin ayrı bir yerinde bir linked list ile boş-dolu belleklerin
+    tutulması fikri varmış. Bitmap'e göre daha hızlı. Yeni bir bellek alınacağı
+    zaman bu liste üzerinde arama yapılıyormuş; first fit, next fit, best fit,
+    worst fit, quick fit gibi algoritmalar denenmiş.
+
+
+----[12.5] Sanal bellek (virtual memory)
+
+    Multiprocessing yönetim işi programcıya ait olup zorlaşmaya başlayınca,
+    1961'de birisi her şeyi OS'in halledeceği sanal bellek fikrini ortaya atmış.
+    Basitçe, her programın kendi adres uzayı var ve bu uzay "page"lere bölünmüş
+    durumda. Bu page'lerin tekabül ettiği fiziksel olarak sürekli adresler var.
+    Pagelerin tümünün aynı anda bellekte tutulmasına gerek yok; bellekte olmayan
+    bir page'e erişilmeye çalışılınca "page fault handler" donanımsal yardım
+    (MMU) ile ilgili page'i hafızaya yerleştiriyor.
+
+    MMU'lar eskiden ayrı imiş şimdi CPU'ya gömülü.
+
+
+------[12.5.1] Paging
+
+--------[12.5.1.1] page
+
+    sanal sayfa
+
+
+--------[12.5.1.2] page frame
+
+    fiziksel sayfa
+            
+
+--------[12.5.1.3] page table
+
+    page ve page frame'leri eşleştiren tablo. Yeri: MMU ya da bellek.
+
+
+--------[12.5.1.4] page table entry
+
+    tablodaki girdiler
+
+
+                              present/
+                    refrncd?   absent
+                    +-+^+-+-----+^+------------------------+
+                    | | | | rwx | |   page frame number    |
+                    +v+-+v+-----+-+------------------------+
+           caching <-'  modified?
+          disabled?
+                        
+                       Görsel: Örnek page table entry
+
+
+--------[12.5.1.5] TLB (translation lookaside buffer) 
+
+    Fiziksel-sanal bellek adres dönüşümü dar boğaz faktör olmaya başlayınca
+    çözüm fikirleri çıkmış. Eşleştirme tablolarını ayrı registerlarda tutalım
+    diyince maliyet çok yüksek; tamamen bellekte tutalım diyince de hız çok
+    düşük oluyormuş.
+
+    Bakmışlar ki programlar genelde sadece belirli page'lere erişiyor; demişler
+    ki biz donanımda TLB diye ufak bir hafıza ayıralım, burada belli başlı
+    page'lerin fiziksel karşılıklarını tutalım. Genelde bu tablolar 256 girdiden
+    büyük olmazmış.
+
+    TLB'ler MMU tarafından da yönetilebilirmiş, yazılımsal olarak da. Yazılımsal
+    olarak yönetmek o kadar da yavaşlığa sebep olmuyormuş, hem de donanımsal
+    maliyeti yok.
+
+----------[12.5.1.5.1] Çalışması
+
+    1) MMU'ya bir sanal page'in fiziksel karşılığı sorulunca:
+    2) MMU, TLB'ye bakar:
+        2.1) TLB'de varsa ve prot bitleri uygunsa: PAGE FRAME
+                                                   VERİLİR
+        2.2) TLB'de varsa ama prot bitleri uygunsuzsa: PROTECTION 
+                                                       FAULT
+    3) O page TLB'de yoksa:
+        3.1) MMU, normalde yaptığı gibi işlemin bellekteki page
+             table'ına bakar ve PAGE FRAME VERILIR
+             3.1.1) Ve MMU o page table entry'yi BELLEKTEN TLB'YE 
+                    ÇEKER (bu sırada TLB'dekini de geri bellekteki
+                    page table'a yazar)
+
+                
+
+        +-------+--------------+----------+------------+------------+
+        | Valid | Virtual page | Modified | Protection | Page Frame |
+        +-------+--------------+----------+------------+------------+
+        |   1   |      140     |    1     |    rw-     |     31     |
+        +-------+--------------+----------+------------+------------+
+        |   1   |       20     |    0     |    r-x     |     38     |
+        +-------+--------------+----------+------------+------------+
+        |   1   |      288     |    1     |    rwx     |     29     |
+        +-------+--------------+----------+------------+------------+
+        |   1   |       59     |    0     |    r--     |     10     |
+        +-------+--------------+----------+------------+------------+
+        |   1   |      814     |    1     |    r-x     |     75     |
+        +-------+--------------+----------+------------+------------+
+        |       |              |          |            |            |
+        .       .              .          .            .            .
+
+                            Görsel: Örnek bir tlb
+
+
+--------[12.5.1.6] Soft miss
+
+    page tlb'de yoksa ama işlemin belleğinde ise.
+
+
+--------[12.5.1.7] hard miss
+
+    page tlb'de de işlemin belleğinde de yok; diskte ise.
+
+
+--------[12.5.1.8] page table walk
+                
+    page table hierarchy üzerinde entry arama.
+
+
+--------[12.5.1.9] minor page fault
+
+    page bellekte ama bizim işlemin değil, başka işlemin belleğinde.  map'lemek
+    yeterli.
+
+
+--------[12.5.1.10] major page fault
+
+    page bellekte değil diskte. mecbur oradan okuyacağız.
+
+
+--------[12.5.1.11] segmentation fault
+
+    program geçersiz bir belleğe erişmeye çalıştı; sonlandırıldı.
+
+
+--------[12.5.1.12] multilevel page tables
+
+    Sanal adres space'leri büyüdükçe böyle bir yapı kurmak gerekmiş.  Mesela 32
+    bit bir adresin ilk 10 bit'i PT1, ikinci 10 biti PT2, son 12 biti ise offset
+    olarak kullılarak birkaç aşamada asıl entry'ye erişiliyor.
+
+
+--------[12.5.1.13] inverted page table
+
+    Normalde page table'larda "sanal adresin fiziksel karşılığı ne?" sorusunun
+    cevabı varken, bu yöntemde tam tersi, "fiziksel adresin sanal karşılığı ne?"
+    sorusu üzerine bir tablo var.  Dolayısıyla fiziksel adresin gerçek boyutuna
+    bağlı bir page table ortaya çıkıyor ve boyutu da haliye çok büyük olmuyor.
+    Ama bu sefer te sanaldan gerçeğe adres dönüşümü için tüm tabloyu tek tek
+    okumak gerekiyormuş falan ve TLB'de hash table tutarak hızlandırmışlar
+    falan.
+
+    64 bit sistemlerde yaygın kullanılıyormuş bu yaklaşım. Hala mı?
+
+
+--------[12.5.1.14] Page replacement algoritmaları
+
+    Page fault olunca hangi entry'yi dışarı atsak da yenisini alsak?  Bazı
+    yaklaşımlar şöyle:
+
+        Algorithm                       Comment
+        ----------------------------------------------------------------
+        Optimal                         Not implementable
+        NRU (Not Recently Used)         Very crude approximation of LRU
+        FIFO (First-In, First-Out)      Might throw out important pages
+        Second chance                   Big improvement over FIFO
+        Clock                           Realistic
+        LRU (Least Recently Used)       Excllnt,hard to implement exctly
+        NFU (Not Frequently Used)       Crude approximation to LRU
+        Aging                           Efficient, approximates LRU well
+        Working set                     Somewhat expensive to implement
+        WSClock                         Good efficient algorithm
+
+
+--------[12.5.1.15] İdeal page size
+
+    Bugünlerde 4K. 512B - 64K arası değerler kullanılmış zamanında.
+
+
+--------[12.5.1.16] Instruction ve data space'leri ayrı tutmak
+
+    Böyle bir yapkaşim da olmuş. Galiba çok eski...
+
+
+--------[12.5.1.17] Shared pages ve COW (copy on write)
+
+    Multiprogramming sistemlerde yerden tasarruf için ortak page'leri ortak
+    kullandırmak iyi bir yaklaşım. UNIX'te fork() gerçekleşince, çocuk işleme de
+    bir page table veriliyormuş ve bu tablo annesininkiyle aynı page'lere işaret
+    ediyormuş. Ama tüm girdiler READ ONLY. Bu RO page'lerden birine yazılmak
+    istendiği zaman gerçek page fault oluyormuş ve bu page'in gerçek bir kopyası
+    oluşturuluyormuş, yani copy on write.
+
+
+--------[12.5.1.18] Shared libraries
+
+    Büyük boyutlu kütüphanelerdeki sık kullanılan fonksiyonları her exe'ye
+    eklemek yerine paylaşımlı kütüphanelerde tutup çalışma sırasında oradan
+    çekme fikri.
+
+    Eğer başka bir program shared lib'i belleğe yüklediyse yeni program doğrudan
+    oradan kullanır, yeniden yükleme yapmaz; ki shared lib'deki asıl amaç da
+    budur. Ayrıca bir shared lib belleğe tek seferde yüklenmez, ihtiyaç
+    duyuldukça page page yüklenir. Eğer PIE (position-independent code) ile
+    derlenmezse her program için lib'in page'leri ayrı yere kopyalanır, shared
+    olmasının bir manası kalmaz.
+
+
+--------[12.5.1.19] Mapped files
+
+    İşlemler istedikleri dosyalara write/read ile erişmek yerine, onları
+    belleklerine "map"leyebilirler. Bu sayede gerektikçe dosya page size
+    büyüklüğünde parçalar halinde belleğe yüklenir ve bir char array gibi
+    erişilebilir. Yazma yapıldığı zaman değişikliğin yansıması için unmap
+    yapması ya da işlemin sonlanması gerekiyor.
+    
+    Shared memory üzerinden IPC yapmak bu şekilde oluyor.
+
+    Aslında shared lib'ler mapped files'ın ufak bir alt kümesi.
+
+
+------[12.5.2] Adım adım paging
+
+    İşletim sistemi 4 yerde paging alakalı iş yapar: 
+
+        1 İşlem oluşturma anında
+        
+            Data ve text sectionları büyüklüklerine bakarak bellekte
+            page table oluşturulur. Swap-out edilebilecek page'ler için
+            swap area'da da yer oluşturulur. Programın data ve text
+            sectionları swap area'ya da yazılır ya da doğrudan exe
+            üzerinden map'lenir; ki page fault alındıkça oralardan
+            page-in yapılırlar.
+
+        2 İşlem çalıştırmaya başlarken
+
+            Bir işlem çalışmaya başlamadan önce MMU bu yeni işlem için
+            re-set'lenir ve TLB de temizlenir. Yeni işlemin page table'ı
+            güncel page table olarak seçilir (register(lara) tablonun
+            tamamını ya da tablo pointer'ını yazarak). Ve bazen de
+            işlemin page'lerinin belirli bir kısmı ya da tamamı önceden
+            belleğe alınır ki ilerde daha az page fault olsun.
+
+        3 Page fault anında
+
+            İşletim sistemi hangi sanal adres fault'a sebep oldu diye 
+            ilgili register'a bakar. Bu bilgi ile de diskten o page'i
+            boş bir page frame'e yükler. Yer yoksa bellekten bir page
+            frame'i diske geri yazar. Sonra PC'yi hata veren
+            instruction'a ayarlar ve işlem çalışmaya devam eder.
+
+        4 İşlem sonlandırma anında
+
+            İşletim sistemi, işlemin page table'ını, page'lerini ve
+            diskteki depolanmış page'lerini salıverir. Eğer bu
+            page'lerden shared olanlar varsa, kullana işlemler sonlanana
+            kadar onları tutar.
+
+
+------[12.5.3] Adım adım page fault handling
+
+    1 Donanımsal trap oluşturulur, PC stack'e kaydedilir, o anki
+      instructionun durumu özel registerlara kaydedilir
+
+      1.1 Instruction backup: O anki instructionun durumunu kaydetmek o
+          kadar da kolay değil, bazen donanımda özel registerlar
+          bulunduruluyormuş state'leri tutmak için.
+
+    2 GPR'lar ve diğer bazı şeyler bir asm routine tarafından
+      kaydedilir (stack'e galiba). Sonra bu routine kernel'i bir 
+      procedure (fonksiyon) olarak çağırır.
+
+    3 OS hangi adresten oldu diye aramaya başlar. Genelde bir
+      registerda o adres tutulur ama yoksa da hata veren
+      insturiction'u tekrar çalıştırıp adresi yakalamak zorunda.
+
+    4 Adres öğrenilince adres doğru mu ve protection uygun mu diye
+      bakar. Değilse işleme signal yollar veya öldürür. 
+
+    5 Eğer adreste ve prot bitlerinde sorun yoksa boş bir page frame
+      var mı diye bakılır, yoksa page replacement algoritması
+      devreye girer ve bir page seçer. Bu page "dirty" ise yani
+      yazılmış ama diskteki (mmap'ed file ise) ya da swaptaki
+      (anonymous page ise) aslı güncellenmemişse ilk olarak bu
+      temizlenir yani aslı güncellenir. Bu temizleme arka planda
+      yapılabileceğinden bu sırada "context switch" olur ve diğer
+      işlemler çalışır. Bu sırada ilgili frame "busy" olarak
+      işaretlidir koruma amaçlı.
+
+    5 Page frame temiz ise (ya da temizlendiyse), işletim sistemi
+      diskteki page'i, bellekteki page frame'e okumak üzere talimat
+      verir ve bu arka planda yürütülür; CPU başka işlemlere hizmet
+      verir.
+
+    6 Disk interrupt'ı page'in geldiğini haber edince page table
+      güncellenir ve page frame normal olarak işaretlenir.
+
+    7 Faulta sebep olan instruction hata anındaki durumuna getirilir
+      ve PC ona işaret ettirilir.
+
+    8 Faulta sebep olan işlem schedule edilir ve 2. adımda procedure
+      olarak çağırılmış işletim sistemi, asm routine'e return yapar.
+
+    9 Asm routine GPR'ları ve diğer bilgileri geri yükler ve
+      userspace'e return eder, program çalışmaya devam eder.
+
+
+------[12.5.4] Diske page yedekleme
+
+    Hep dedik yedeklenir swapa atılır falan ama bunun aslı ne? Şöyle ki birkaç
+    şekilde yapılabiliyor bu.
+
+    Unix'te swap diye ayrı bir partition ya da disk oluyor. Burada bir fs yok ve
+    doğrudan diskin blok numarasıyla erişim yapılıyor yani hızlı.
+
+    Eğer swap diye bir partition yoksa, Windows'ta da yapıldığı gibi büyük
+    bir/birkaç dosya oluşturuluyor ve dosya sistemi üzerinden bu dosyalara yazma
+    okuma yapılarak bunlar swap partition gibi kullanıliyor.
+
+    İki swaplama yöntemi varmış:
+
+        1 Program başlatılırken tüm imajı swap'a yazmak ve ihtiyaç
+          oldukça oradan page-in yapmak
+
+        2 Program başlatılırken tüm imajı belleğe almak ve ihtiyaç
+          oldukça oraya page-out yapmak
+
+    Sanırım linux'umda ikinci yöntem kullanılıyor zira swap %0 dolu.
+
+
+------[12.5.5] Segmentation
+
+    Paging dedik ama, bu paging belleği 0-0xfffffffffff... arası tek boyutlu bir
+    yapı olarak değerlendiriyor. Dinamik büyüyen section'lar olunca ve bunlar
+    çok olunca overflow yönetimi zorlaşıyormuş. Sonuçta ne kadar page olursa
+    olsun bu sectionlar 0-0xfffffff... arasında birbiriyle bağlantılı alanlara
+    yerleştiriliyor.
+
+    İşte bunu çözmek için "segmentleyelim" demişler. Her section için bir
+    segment olduğunu düşünün ve bu segmentler ayrı ayrı address space'lere
+    sahip, dolayısıyla birbirlerini sanal adreste ezemiyorlar.
+
+    Paging OS tarafından yönetiliyordu, segmentation ise programcı tarafından
+    kontrol edilmesi gereken bir şeymiş.
+
+    Avantajları şu şekilde:
+
+        1   Dinamik büyüyen sectionlar ayrı segmentlerde tutulunca ayrı
+            sanal adres uzayları olduğu için birbirini ezme durumu
+            olmuyor.
+
+        2   Tüm segmentler 0x0 adresinden başladığı için linkleme
+            aşaması çok kolaylaşıyor. Recompilation yapılacağı zaman
+            sadece o segmentteki section derlense yetiyor; diğer
+            sectionlardaki adreslerle bağımlılık yok çünkü.
+
+        3   Sadece paging yapan sistemlere göre işlemler arası shared
+            lib paylaşımı daha kolay oluyormuş.
+
+        4   Protection bitleri page bazlı değil, segment bazlı
+            ayarlanabildiğinden section yönetimi daha kolay.
+
+            
+--------[12.5.5.1] x86-64: Segmentation artık yok
+
+    Geriye uyumluluk için kısmen yer alsa da piyasada çok tutulmayınca
+    segmentation özelliğini kaldırmışlar.
+
+    "None of the developers of any UNIX or Windows system wanted to change their
+    memory model to something that was x86 specific because it would break
+    portability to other platforms. Since the software was not using the
+    feature, Intel got tired of wasting chip area to support it and removed it
+    from the 64-bit CPUs."
+
+
+--------[12.5.5.2] x86: Segmentleri page'lemek
+
+    Segmentlerin boyutu büyük olunca bellekte tutmak zor olacağı için
+    (MULTICS'den özenerek) segmentleri page'leyelim demişler.
+
+    16K segment varmış ve her biri 1 milyar tane 32-bitlik word tutuyormuş. İki
+    önemle tablo ile segmentation yönetimi yapılıyor.
+
+
+----------[12.5.5.2.1] LDT (local descriptor table)
+        
+    Her programın ayrı bir LDT'si var ve bu tabloda programın code, data, stack
+    vs. segmentleri tanımlı. (Herhalde ayrı bir donanım yoktur bunun için.)
+                
+
+----------[12.5.5.2.2] GDT (global descriptor table)
+
+    Sistem segmentleri tanımlıymış, kernelin segmentleri de burayada
+    tanımlıymış. 1 tane var ve tüm programlar bunu paylaşıyor.
+            
+                
+----------[12.5.5.2.3] segment:offset -> fiziksel adres dönüşümü
+
+    Doğrusu anlamadım. Segment registerları ile bir adres alınıyor sonra birkaç
+    hesap yapılıyor, multilevel bir paging ile (page directory -> page table ->
+    page frame) adres alınıyor. TLB'ler de pagedir:pagetable->pageframe
+    dönüşümleri tutuluyor.
+
+    6 tane (16-bit ?) segment registerı varmış ve ilk ikisi dışındakiler
+    önemsizmiş:
+
+        CS  Code segment
+        DS  Data segment
+        SS  Stack segment
+        ES  Extra segment (programcı için)
+        FS  Özel amacı yok
+        GS  Özel amacı yok
+
+
+--[13] Random notes to put somewhere in the note
+
+----[13.1] KASLR -> KAISER -> PTI
+
     KASLR (Kernel Address Space Layout Randomization) is for the most part
     deprecated and replaced by KAISER (Kernel Address Isolation to have
-    Side-channels Efficiently Removed) which in turn is deprecated and
-    replaced by KPTI (Kernel Page-Table Isolation). These three "K-steps"
-    are all part of "Kernel Hardening".
+    Side-channels Efficiently Removed) which in turn is deprecated and replaced
+    by KPTI (Kernel Page-Table Isolation). These three "K-steps" are all part of
+    "Kernel Hardening".
 
 
-    initramfs playbook
-    -----------------
-    cat initramfs | cpio -id    # extract it
-    lsinitrd initramfs          # list contents w/o extracting
+----[13.2] Spinlock
+
+    In software engineering, a spinlock is a lock which causes a thread trying
+    to acquire it to simply wait in a loop while repeatedly checking if the lock
+    is available. Since the thread remains active but is not performing a useful
+    task, the use of such a lock is a kind of busy waiting.
 
 
-[-] Notes from pwn.college kernel module
+--[14] Notes from pwn.college kernel module
 
     'hlt', 'in' and 'out' insturictions require kernel privileges.
 
@@ -1283,60 +1768,60 @@
     Accessed using 'wrmsr' and 'rdmsr' privileged instructions.
 
 
-    [+] Rings
+----[14.1] Rings
 
-        VM guest shouldn't  be able to have unlimited access to the host's
-        physical hardware.
+    VM guest shouldn't  be able to have unlimited access to the host's physical
+    hardware.
 
-        Early 2000's solution: force the VM kernel into ring 1.
-        Drawback             : Cost of emulating ring-0 tasks of the vm
+    Early 2000's solution: force the VM kernel into ring 1.
+    Drawback             : Cost of emulating ring-0 tasks of the vm
 
-        Modern solution      : Ring -1; hypervisor mode. Able to intercept
-                               sensitive ring 0 actions done by guests and
-                               handle them in the host OS.
-
-
-    [+] Different types of OS models
-
-        1. Monolithic kernel: A single, unified binary handling all tasks.
-                              Linux, FreeBSD.
-
-        2. Microkernel: A tiny core binary provides IPC and barebone
-                        interactions with the hardware. Only that core
-                        binary runs at ring 0; all other drivers are
-                        normal-ish userspace programs with slightly special
-                        privileges. Slow but usable for security critical
-                        situations.
-                        Minux, seL4
-
-        3. Hybrid kernel: Micrekernel features combined with a monolithic
-                          component.
-                          Windows(NT), MacOS
+    Modern solution      : Ring -1; hypervisor mode. Able to intercept
+                           sensitive ring 0 actions done by guests and
+                           handle them in the host OS.
 
 
-    [+] How kernel handles syscalls
+----[14.2] Different types of OS models
 
-        1. At bootup, in ring 0, the kernel sets 'MSR_LSTAR' register to
-           point to the syscall handler routine (handle_syscall ?)
+    1. Monolithic kernel: A single, unified binary handling all tasks.
+                          Linux, FreeBSD.
 
-        2. When a userspace (ring 3) process wants to intract w/ the kernel,
-           it calls 'syscall' instruction. In 'syscall':
-           2.1 Privilege level switches to ring-0
-           2.2 Control flow jupts to value of 'MSR_LSTAR'
-           2.3 Return address saved to 'rcx', not stack for security reasons
-        
-        3. Whet kernel is ready to return to userspace, it calls 'sysret'
-           instruction.
-           2.1 Privilege level swithes back to ring 3
-           2.2 control flow jumps to the value of 'rcx'
+    2. Microkernel: A tiny core binary provides IPC and barebone
+                    interactions with the hardware. Only that core
+                    binary runs at ring 0; all other drivers are
+                    normal-ish userspace programs with slightly special
+                    privileges. Slow but usable for security critical
+                    situations.
+                    Minux, seL4
+
+    3. Hybrid kernel: Micrekernel features combined with a monolithic
+                      component.
+                      Windows(NT), MacOS
 
 
-    [+] Kernel memory vs userspace memory
+----[14.3] How kernel handles syscalls
 
-        Kernel has it's own virtual memory space, but in high addresses.
+    1. At bootup, in ring 0, the kernel sets 'MSR_LSTAR' register to
+       point to the syscall handler routine (handle_syscall ?)
 
-        Syscalls don't switch the virtual memory mapping, but kernel memory
-        is only accessible from ring 0 (what dat means???)
+    2. When a userspace (ring 3) process wants to intract w/ the kernel,
+       it calls 'syscall' instruction. In 'syscall':
+       2.1 Privilege level switches to ring-0
+       2.2 Control flow jumps to value of 'MSR_LSTAR'
+       2.3 Return address saved to 'rcx', not stack for security reasons
+    
+    3. Whet kernel is ready to return to userspace, it calls 'sysret'
+       instruction.
+       2.1 Privilege level swithes back to ring 3
+       2.2 control flow jumps to the value of 'rcx'
+
+
+----[14.4] Kernel memory vs userspace memory
+
+    Kernel has it's own virtual memory space, but in high addresses.
+
+    Syscalls don't switch the virtual memory mapping, but kernel memory is only
+    accessible from ring 0 (what dat means???)
 
         $ cat /proc/self/maps
         .
@@ -1355,143 +1840,463 @@
         from ubuntu.
 
 
-    [+] Possible kernel attack vectors
+----[14.5] Possible kernel attack vectors
         
-        1. Remote (network etc.). Was popular around '95s. Rare nowadays.
-        2. From userspace. Sandbox escaping etc.
-        3. Via devices. USB device pwning USB driver etc.
+    1. Remote (network etc.). Was popular around '95s. Rare nowadays.
+    2. From userspace. Sandbox escaping etc.
+    3. Via devices. USB device pwning USB driver etc.
 
 
-    [+] Kernel modules
+----[14.6] Kernel modules
 
-        Are libraries being loaded into the kernel.
+    Are libraries being loaded into the kernel.
 
-        [*] Ways to interact w/ kernel modules
+------[14.6.1] Ways to interact w/ kernel modules
 
-            1. System calls
-            2. Interrupts
-            3. Files (/dev/sda etc.)
-               3.1 Via read() and write()
-               3.2 Via ioctl()
+    1. System calls
+    2. Interrupts
+    3. Files (/dev/sda etc.)
+       3.1 Via read() and write()
+       3.2 Via ioctl()
 
-        [*] Syscall hooking
+------[14.6.2] Syscall hooking
 
-            Historically, kernel modules could add system call entries via
-            modifying the system call table. This is now explicitly
-            unsupported in modern kernels.
+    Historically, kernel modules could add system call entries via modifying the
+    system call table. This is now explicitly unsupported in modern kernels.
 
-        [*] Interrupt hooking
+------[14.6.3] Interrupt hooking
 
-            A module could register an interrupt handler by using "LIDT" and
-            "LGDT" instructions and be triggered by, say, an 'int 42'
-            instruction.
+    A module could register an interrupt handler by using "LIDT" and "LGDT"
+    instructions and be triggered by, say, an 'int 42' instruction.
 
-            Useful one-byte interrupt instructions to hook:
+    Useful one-byte interrupt instructions to hook:
 
-                int3 (0xcc): normally causes a SIGTRAP; used by gdb for
-                             breakpointing
-                int1 (0xf1): normally used for hardware debugging
+        int3 (0xcc): normally causes a SIGTRAP; used by gdb for
+                     breakpointing
+        int1 (0xf1): normally used for hardware debugging
 
-            A module can also hook the Invalid Opcode Exception interrupt to
-            implement custom instructions in software.
+    A module can also hook the Invalid Opcode Exception interrupt to implement
+    custom instructions in software.
 
-        [*] Interation w/ modules via files
+------[14.6.4] Interation w/ modules via files
 
-            - /dev; mostly traditional devices have files here
-            - /proc; driver files about running processes (?)
-            - /sys; non-process information interface w/ the kernel
+    - /dev; mostly traditional devices have files here
+    - /proc; driver files about running processes (?)
+    - /sys; non-process information interface w/ the kernel
 
-            A module can register a file in one of the above locations.
-            Userspace can open() that file to interact w/ the module.
+    A module can register a file in one of the above locations.
+    Userspace can open() that file to interact w/ the module.
 
 
-            [~] read() and write()
+--------[14.6.4.1] read() and write()
 
-                Useful for streaming data.
+    Useful for streaming data.
 
-                Kernel side provides:
-                    
-                    static ssize_t device_read(struct file *filp, char *buf,
-                                                   size_t len, loff_t *off);
-                    static ssize_t device_write(struct file *filp,
-                                        char *buf, size_t len, loff_t *off);
+    Kernel side provides:
+        
+        static ssize_t device_read(struct file *filp, char *buf,
+                                       size_t len, loff_t *off);
+        static ssize_t device_write(struct file *filp,
+                            char *buf, size_t len, loff_t *off);
 
-                Userspace side uses:
+    Userspace side uses:
+    
+        fd = open("/dev/mydevice", 0);
+        read(fd, buffer, 128);
+
+
+
+--------[14.6.4.2] ioctl()
                 
-                    fd = open("/dev/mydevice", 0);
-                    read(fd, buffer, 128);
+    Input/Output control provides a much more flexible interface. Useful for
+    setting and querying not-stream data (i.e., webcam resolution settings).
+
+    Kernel side provides:
+
+        static long device_ioctl(struct file *filp,
+             unsigned int ioctl_num, unsigned long ioctl_param);
+
+    Userspace side uses:
+
+        int fd = open("/dev/mydevice", 0);
+        ioctl(fd, COMMAND_CODE, &custom_data_structure);
 
 
-
-            [~] ioctl()
-                
-                Input/Output control provides a much more flexible
-                interface. Useful for setting and querying not-stream data
-                (i.e., webcam resolution settings).
-
-                Kernel side provides:
-
-                    static long device_ioctl(struct file *filp,
-                         unsigned int ioctl_num, unsigned long ioctl_param);
-
-                Userspace side uses:
-
-                    int fd = open("/dev/mydevice", 0);
-                    ioctl(fd, COMMAND_CODE, &custom_data_structure);
+    That &custom_data_structure thing causes lots of vulnerabilities!
 
 
-                That &custom_data_structure thing causes lots of
-                vulnerabilities!
+--------[14.6.4.3] Kernel Race Conditions
+
+    They are always prone to multi-threading!
+     - What happens if two devices (/dev/mydev) open simultaneously?
+
+    They could disappear or swap resources mid-execution!
+     - What happens if module.ko is removed while /proc/mydev is open?
+
+    Race conditions are huge problems plaguing kernels!
 
 
-            [~] Kernel Race Conditions
+--------[14.6.4.4] On credentials
 
-                They are always prone to multi-threading!
-                 - What happens if two devices (/dev/mydev) open 
-                   simultaneously?
-
-                They could disappear or swap resources mid-execution!
-                 - What happens if module.ko is removed while /proc/mydev
-                   is open?
-
-                Race conditions are huge problems plaguing kernels!
+    The credentials are supposed to be immutable (i.e., they can be cached
+    elsewhere, and shouldn't be updated in place).  Instead, they can be
+    replaced with fresh ones (via commit_creds()).
 
 
-            [~] On credentials
+--[15] Kernelde Güvenlik
 
-                The credentials are supposed to be immutable (i.e., they can
-                be cached elsewhere, and shouldn't be updated in place).
-                Instead, they can be replaced with fresh ones (via 
-                commit_creds()).
+----[15.1] SELinux
+
+    Security-Enhanced Linux was developed by National Security Agency (NSA)
+    using Linux Security Modules (LSM).
+
+    There are two modes of SELinux
+
+        permissive - permission denials are logged but not enforced
+        enforcing - permission denials are logged and enforced
+
+    In Android the default mode of SELinux is enforcing and even if we get root,
+    we are subjected to SELinux rules.
+
+        generic_x86_64:/ $ getenforce
+        Enforcing
+
+    So, we need to disable SELinux as well.
+
+------[15.1.1] Bypassing SELinux
+
+    selinux_enforcing is a global variable which dictates whether SELinux is
+    enforced or not. If we can figure out where selinux_enforcing is in memory
+    and set it to NULL, then we can disable SELinux globally and now SELinux
+    will be in permissive mode instead of enforcing mode.
+
+----[15.2] SecComp
+
+    SecComp stands for Secure Computing mode and is a Linux kernel feature that
+    allows to filter system calls. When enabled, the process can only make four
+    system calls read(), write(), exit(), and sigreturn().
+
+    When running the exploit from adb shell we are not subjected to seccomp.
+    However, if we bundle the exploit in an Android application, we would be
+    subjected to seccomp.
+
 
             
-[-] Misc
+--[16] Misc
 
-    [*] UML (user mode linux)
+----[16.1] UML (user mode linux)
 
-        "uml": We could configure the kernel to run as User Mode Linux.  Running
-        a UML kernel requires no privileges. The kernel just runs a user space
-        process. UML is pretty cool, but sadly, it doesn't support KASAN,
-        therefore the chances of finding a memory corruption bug are reduced.
-        Finally, UML is a pretty magic special environment - bugs found in UML
-        may not be relevant on real environments.  Interestingly, UML is used by
-        Android network_tests framework.
+    "uml": We could configure the kernel to run as User Mode Linux.  Running a
+    UML kernel requires no privileges. The kernel just runs a user space
+    process. UML is pretty cool, but sadly, it doesn't support KASAN, therefore
+    the chances of finding a memory corruption bug are reduced.  Finally, UML is
+    a pretty magic special environment - bugs found in UML may not be relevant
+    on real environments.  Interestingly, UML is used by Android network_tests
+    framework.
 
-    Linux insides kalinan yer:
+----[16.2] Linux insides kalinan yer:
+    
     https://0xax.gitbooks.io/linux-insides/content/Initialization/linux-initialization-3.html
 
+----[16.3] rawsploit: libc çok büyük gelince
+    
+    https://github.com/GrosQuildu/grosquildu.github.io/blob/adee55d3b9930fe291b50108df228780a0978f4e/assets/other/raw_sploit.h
 
-[-] Fuzzing
+
+----[16.4] AMD64 Kernel calling conventions
+
+    Userspace'den tek farkı var.
+
+    Userspace x64   : rdi, rsi, rdx, rcx, r8, r9, stack
+    Kernelspace x64 : rdi, rsi, rdx, r10, r8, r9, stack
+
+
+--[17] Fuzzing
 
     https://blog.cloudflare.com/a-gentle-introduction-to-linux-kernel-fuzzing/
 
 
+--[18] Android SDK emulator kullanımı
+
+----[18.1] Start emulator
+
+    emulator -no-window -show-kernel -no-snapshot -wipe-data \
+            -avd CVE-2019-2215 \
+            -kernel out/kasan/dist/bzImage -qemu -s -S
+
+----[18.2] Start gdb
+    
+    gdb -quiet out/kasan/dist/vmlinux -ex 'target remote :1234'
+
+----[18.3] Set cpu cores to 1
+        
+    For better GDB debugging and tracing support, it's recommended to set the
+    number of CPU cores to 1. 
+        In ~/.android/avd/CVE-2019-2215.avd/config.ini:
+            hw.cpu.ncore = 1
+
+--[19] Rastgele Exploitation Notları
+
+----[19.1] Data-only attacks
+
+    Arbitrary Read Write primitives are also called as data only attacks.  Where
+    we do not hijack the execution flow of the CPU and just corrupt targeted
+    data structures to achieve privilege escalation.
+
+----[19.2] addr_limit on arm64
+
+    Vitaly Nikolenko (@vnik5287) pointed out that in arm64 there is a check in
+    do_page_fault function which will crash the process if the addr_limit is set
+    to 0xFFFFFFFFFFFFFFFF. So set it to 0xFFFFFFFFFFFFFFFE.
+
+----[19.3] DiShen's UAF exploitation gadget: "struct iovec"
+
+    iovec is a data structure used for vectored I/O a.k.a scatter gather.  It's
+    used to read a big buffer and scatter it to smaller buffers and vice versa.
+                                                                      
+                                                                      
+                  +------------------------------------+              
+                  |                                    |              
+                  |                                    |              
+                  |                                    |<---------+   
+                  |         big kernel buffer          |          |   
+                  |                                    |<------+  |   
+                  |                                    |       |  |   
+                  |                                    |<---+  |  |   
+                  |                                    |    |  |  |   
+                  +------------------------------------+    |  |  |   
+                         ^                                  |  |  |   
+                         |                                  |  |  |   
+         KERNEL          v                                  |  |  |   
+         SPACE     +------------------+                     |  |  |   
+         - - - - - |readv() & writev()| - - - - - - - - - - - - - - - -
+         USER      +------------------+                     |  |  |   
+         SPACE           ^                                  |  |  |   
+                         |                                  |  |  |   
+                         v                                  |  |  |   
+                  +--------------+                          |  |  |   
+                  | +----------+ |           +-----------+  |  |  |   
+                  | | iov_base |-+---------->| user_buf1 |<-+  |  |   
+                  | +----------+ |           +-----------+     |  |   
+                  | | iov_len  | |                             |  |   
+                  | +----------+ |           +-----------+     |  |   
+                  | | iov_base |-+---------->| user_buf2 |<----+  |   
+                  | +----------+ |           +-----------+        |   
+                  | | iov_len  | |                                |   
+                  | +----------+ |           +-----------+        |   
+                  | | iov_base |-+---------->| user_buf3 |<-------+   
+                  | +----------+ |           +-----------+            
+                  | | iov_len  | |                                    
+                  | +----------+ |                                    
+                  +--------------+                                    
+
+        --------------------------------------------------------------------
+        // include/uapi/linux/uio.h.
+
+        struct iovec
+        {
+            void __user *iov_base;
+            __kernel_size_t iov_len;
+        };
+        --------------------------------------------------------------------
+
+    Advantages of struct iovec:
+        - small in size, on x64 bit system it's size is 0x10 bytes
+        - we can control all the members iov_base and iov_len
+        - we can stack them together to control desired kmalloc cache
+        - it has a pointer to buffer and length of the buffer, which is a
+          great target for corruption
+
+    Issues with struct iovec:
+        One of the main issue with struct iovec is that they are short lived.
+        They are allocated by system calls when they are working with the
+        buffers and immediately freed when they return to user mode.
+
+    How do we make iovec structure stay in kernel before we trigger the bug?
+        One way is to use system calls like readv, writev on a pipe file
+        descriptor because it can block if the pipe is full or empty.
+
+        pipe is an unidirectional data channel that can be used for interprocess
+        communication. The blocking feature of pipe gives us significant time
+        window to corrupt iovec structure in kernel space.
+
+        In the same manner we can use recvmsg system call to block by passing
+        MSG_WAITALL as the flag parameter.
 
 
+------[19.3.1] How to pwn with this?
+
+    I'm not sure. Gotta watch the video. It involves readv, writev, readmsg etc.
+    syscalls.
 
 
+----[19.4] Always winning the races w/ userfaultfd
+
+    Userfaultfd is a syscall allowing userspace programs to handle pagefaults.
+    Not sure about the real purpose of this; but this is extremely useful when
+    it comes to race conditions; since it allows you to "pause" the kernel
+    execution on certain triggers.
+
+    Assume that there are two kfree paths on the kernel code. You want to get a
+    double free.
 
 
+        /* path 1 */
+        if (copy_from_user((void*)&tmp->value, (void*)arg,
+                                        sizeof(unsigned long))) {
+          head = tmp->fd;
+          kfree(tmp);
+          return -EINVAL;
+        }
+        
+        /* stuff here */
+
+        /* path 2 */
+        if (copy_from_user((void*)&tmp->value, (void*)arg,
+                                        sizeof(unsigned long))) {
+          head = tmp->fd;
+          kfree(tmp);
+          return -EINVAL;
+        }
+
+    Since copy_from_user takes its data from userspace, it means it accesses
+    userspace pages. If a pagefault occurs while accesing these userspace pages,
+    it's users decision to leave the handling to kernelspace (as normally
+    happens) or handle it in userspace using userfaulttfd syscall.  If user
+    (hacker in this scheme) writes it's own pagefault handler, he/she can freely
+    slow down (or basically, stop) the execution speed until he/she wishes to
+    resume it again.
+
+    The only condition here is a pagefault to be happen. If we map an absurd
+    page which is 99% out of page directory, it's inevitable the kernel will
+    lazy load that page while calling copy_from_user and a pagefault will
+    happen. When it happens, haxor freezes that thread and in another thread,
+    he/she triggers the second kfree path somehow and double-free!  (yeah the
+    exapmle above may not be the best descriptive example but it's enough if you
+    got the idea). Also, for exploiting this, some other useful kernel data
+    structures probably needs to be involved.
+
+    How to use this exactly? You can checkout some writeups; they mostly follow
+    the userfaultfd(2) man page but some critical points are different. You'll
+    probably copy-paste the code w/o understanding it totally; which is fine in
+    kernel land.
+
+    https://web.archive.org/web/20201205053538/https://blog.lizzie.io/using-userfaultfd.html
+    https://smallkirby.hatenablog.com/entry/2020/08/09/085028
+
+
+----[19.5] seq_operations'un ilk pointer'ını ezmenin yeterli oluşu
+
+            struct seq_operations {
+                            void * (*start) (...);
+                            void (*stop) (...);
+                            void * (*next) (...);
+                            int (*show) (...);
+            };
+
+    kstack sorusunda show'u ezmemiş gerekmişti. start()'ı rastgele bir değerle
+    ezmiştik ama sorun olmamıştı, read(fd_seq_operations) yapınca sadece show()
+    tetiklenmişti.
+
+    Bu soruda ise sadece start()'ı ezmek yetti. Hatta diğer ptr'ları rastgele
+    değerlerle ezmemize rağmen read(fd_seq_operations) yapınca sadece start()
+    tetiklenmiş oldu. Bilmem neden.
+
+
+----[19.6] Stack pivot gadget'indeki adresin son 3 byte'ı 0'dan farklı olmalı
+
+    Uzun bir süre
+
+            mov esp, 0xf6000000; ret;
+
+    gadgeti çalıştırılmaya çalışıldı ama double fault alınıyordu. Daha doğrusu
+    bu gadget çalışıyor ve esp ilgili adrese zıplatılıyordu ama bir sonraki
+    gadget çalışacağı zaman double fault (yani fault handling sırasında fault)
+    tezahür ediyordu.
+
+    Sonra
+
+            mov esp, 0xf6fffffa; ret;
+
+    kullanınca düzeldi. Sebebi şuymuş: PAGE_SIZE yani 0x1000'in tam katları olan
+    adreslere pivotin yapınca, rop sırasında bir sonraki page'e erişilmeye
+    çalışılınca page fault oluyormuş ve nedense patlıyormuş. Böyle küsüratlı bir
+    adres seçince ise sorun olmadı. Nedeni tam anlaşılamasa da böyle olması
+    gerekiyormuş.
+
+
+----[19.7] mov rdi, rax  --> mov edi, eax 'a dönüşüyor ve patlatıyor
+
+    Bu gadget için iki aday mevcuttu:
+
+            0xffffffff81177417: mov rdi, rax; pop rbx; mov rax, rdi; pop r12; pop rbp; ret;
+            0xffffffff810703bb: mov rdi, rax; xor eax, eax; cmp rdi, 0x81; je 0x2703cb; pop rbp; ret;
+
+    Uzun bir süre ilki kullanılmaya çalışıldı. Ve uzun bir süre exploitin
+    çalışmamasına sebep oldu. Anlamak da zordu çünkü gdb ile bakınca exploit
+    normalde sorun olan yerden daha evvel patlıyor gibi gözüküyordu. Tam patlama
+    anında kernel crash dump'ı ile gdb context'i karşılaştırınca senkronizasyon
+    hatası olduğu fark edildi. Crash dump'ına göre çökmeye sebep olan asıl
+    instruction, gdb'deki rip'in birkaç sonrası idi. Her neyse, aday
+    gadget'lardan ilkindeki:
+
+            mov rdi, rax
+
+    x/32xi ile bakınca "mov rdi, rax" olarak gözüküyor fakat çalışma sırasında
+    bir şekilde
+
+            mov edi, eax
+
+    'a dönüşüyor. Ayrıca bu mov sırasında edi'ye taşınırken rdi'ın 8:16 bitleri
+    sıfırlanıyormuş. Sonra da pointer aritmetiğinde hata oluyor ve crash!
+
+    Bu dönüşüm neden oluyor anlayamasak da "mov edi, eax"ın dokunulmayan üst
+    bitleri sıfırlaması beklenen bir etkiymiş (ve hatta stack pivotumuz da bu
+    yüzden doğru çalışabiliyor).
+
+
+----[19.8] swapgs_restore_regs_and_return_to_usermode yerine kullanılabilecekler
+
+    Eski kernel'larda bu sembol bulunmuyor. Bunun yerine muadillerimiz neyse ki
+    mevcut.
+
+    Kısaca, bu sembol iki işi bir arada yapıyordu: swapgs ve iretq. Biz bu iki
+    işi ard arda yapacağız, bu kadar. Kullanılabilecekler ve kullanılamayacaklar
+    şöyle:
+
+        1. Müstakil "swapgs" ve "iretq" gadgetları vmlinux'tan kullanılabilir.
+
+        2. swapgs için kallsyms'te de yer alan
+
+                native_swapgs
+
+           sembolü kullanılabilir, fakat
+
+                nmi_swapgs
+
+           kullanılamaz (trap'e sepeb oluyor)
+
+        3. iretq için hem
+
+                native_irq_return_iret
+
+           hem de
+
+                native_iret
+
+           sembolleri kullanılabilir.
+
+    Belki başka semboller de kullanılabiliyordur. Bunlar tecrübe edildi.
+
+
+[*] Exploitation cheatsheet
+
+    cpio -id < initramfs        # extract initramfs
+    cpio -id < rootfs.cpio      # extract rootfs.cpio
+    lsinitrd initramfs          # list contents w/o extracting
+    linux/scripts/extract-vmlinux <kernel image> >vmlinux  # extract vmlinux
+                                                             from bzImage or
+                                                             vmlinuz
 
 
 vim:set ts=8 sw=4 sts=4 et cc=80 tw=80:
