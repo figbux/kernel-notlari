@@ -129,12 +129,37 @@
         19.4  Always winning the races w/ userfaultfd
         19.5  seq_operations'un ilk pointer'ını ezmenin yeterli oluşu
         19.6  Stack pivot gadget'indeki adresin son 3 byte'ı 0'dan farklı olmalı
-        19.7  mov rdi, rax --> mov edi, eax 'a dönüşüyor ve patlatıyor
+        19.7  mov rdi, rax -> mov edi, eax 'a dönüşüyor ve patlatıyor
         19.8  swapgs_restore_regs_and_return_to_usermode yerine kullanılabilecekler
     20  Exploitation cheatsheet
         20.1  Örnek kROP zincirleri
             20.1.1  Dümdüz stackoverflow
-            20.1.1  Stack pivoting
+            20.1.2  Stack pivoting
+    21  eBPF
+        21.1  eBPF nedir?
+        21.2  eBPF programları ve komut kümesi
+            21.2.1  MOV
+            21.2.2  ALU
+            21.2.3  JMP
+            21.2.4  32bit MOV ALU JMP
+            21.2.5  LDX ve STX
+            21.2.6  ePBF Instruction Cheatsheet
+            21.2.7  BPF_PROG_LOAD
+        21.3  eBPF Maps
+            21.3.1  BPF_MAP_CREATE
+        21.4  JIT compiler
+        21.5  Verifier
+        21.6  ALU Sanitation
+        21.7  eBPF programlarını debuglamak
+            21.7.1  Verifier logları
+            21.7.2  printk-oriented runtime debugging
+            21.7.3  gdb?
+        21.8  eBPF zafiyetleri ve bunların exploit usulleri
+            21.8.1  eBPF'i kullanarak başka bugları exploit etmek
+        21.9  Bu zafiyetlere önlemler
+            21.9.1  BPF_UNPRIV_DEFAULT_OFF
+            21.9.2  ALU sanitation
+        21.10  ePBF exploitlerinin geleceği
 
 
 --[1] Önsöz
@@ -2230,7 +2255,7 @@
     gerekiyormuş.
 
 
-----[19.7] mov rdi, rax  --> mov edi, eax 'a dönüşüyor ve patlatıyor
+----[19.7] mov rdi, rax -> mov edi, eax 'a dönüşüyor ve patlatıyor
 
     Bu gadget için iki aday mevcuttu:
 
@@ -2374,6 +2399,340 @@
          */
         somehow_overwrite_kernel_rip(stack_pivot);
         ------------------------------------------------------------------------
+
+
+--[21] eBPF
+
+    Son zamanlarda LPE'lerin eBPF (Extended Berkeley Packet Filter) üzerinden
+    alındığını görülüyor. Neymiş bu biz de bakalım. Kaynak olarak ZDI'daki
+    blogdan [1] başlıyoruz. Sonra chompie'nin yazısı [2] ile destekliyoruz.
+
+    [1] https://www.zerodayinitiative.com/blog/2020/4/8/cve-2020-8835-linux-kernel-privilege-escalation-via-improper-ebpf-program-verification
+    [2] https://www.graplsecurity.com/post/kernel-pwning-with-ebpf-a-love-story
+
+
+----[21.1] eBPF nedir?
+
+    Since version 3.15, the Linux kernel supports a general tracing feature
+    called “extended Berkeley Packet Filters”, or eBPF for short. This feature
+    allows users to run eBPF programs, which are written in an assembly-like
+    instruction set, directly in kernel space and can be used to trace certain
+    kernel functionalities. This feature can also be used to filter network
+    packets.
+
+    All BPF features are accessed through the BPF syscall, which supports
+    various commands. The man page for BPF(2) states:
+
+        > In the current implementation, all bpf() commands require the caller
+        > to have the CAP_SYS_ADMIN capability.
+
+    This is incorrect. Since Linux 4.4, any user can load eBPF programs and run
+    them by attaching them to a socket they own.
+
+    sysctl'deki kernel.unprivileged_bpf_disabled özelliği ile bu
+    kapatılabiliyormuş. Çoğu dağıtımda (ubuntu dahil) bu özellik açık değilmiş
+    dolayısıyla tehlikeliymiş.
+
+
+----[21.2] eBPF programları ve komut kümesi
+
+    Bu programlar x86 asm'nin kısıtlı bir alt kümesi gibi bir komut kümesiyle
+    yazılıyormuş. 10 register ve 1 stack pointer = 11 register'ımız varmış.
+    Aritmetik işlemler yapabiliyormuşuz bu registerlarda (+ - << >>). 
+
+    Aslında 12. register da varmış: auxiliary (BFP_REG_AX). Ama bu sadece ALU
+    sanitation işlemleri için kullanılıyor (programcı kullanmıyor herhalde).
+
+
+------[21.2.1] MOV
+
+        BPF_MOV64_IMM(BPF_REG_3, 1)
+
+    reg 3'ü 1 yapıyor. Ve:
+
+
+------[21.2.2] ALU
+
+        BPF_ALU64_REG(BPF_ARSH, BPF_REG_7, BPF_REG_5)
+
+    Reg7'deki değeri, reg5'tekiyle ARitmetik SHift yapıyor.
+
+    blabla_IMM() fonksiyonları immediate yani doğrudan bir sayı alırken
+    blabla_REG() fonksiyonları registerlar ile işlemler yapıyor. Oturmaya
+    başladı.
+
+
+------[21.2.3] JMP
+
+    Branching instructionlarımız da mevcut.
+
+        BPF_JMP_IMM(BPF_JNE, BPF_REG_3, 0, 3)
+    
+    "Jump over the next 3 instructions if reg3 is not equal to 0"
+
+
+------[21.2.4] 32bit MOV ALU JMP
+
+    MOV, ALU ve JMP komularının 32 bit sürümleri de mevcut ve ilgili
+    registerların ilk 32 bitinde işlem yapıp üst bitleri sıfırlıyorlar.
+
+
+------[21.2.5] LDX ve STX
+
+    Bellekten yükleme ve belleğe yazma komutları. İkisi de x86-mov'un karşılığı
+    olsa da farkları şu: LDX, ptr aritmetiği ile işaret edilen adresteki veriyi
+    çekmeye yarıyor, STX ptr aritmetiği ile gösterilen adrese yazmaya yarıyor.
+
+        BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_9, 24)
+
+    [reg9+24]'teki 64bit değeri reg3'e yükle (effective addressing)
+
+    ve
+
+        BPF_STX_MEM(BPF_DW, BPF_REG_8, BPF_REG_6, 0)
+
+    reg6'daki değeri [ reg8+0 ]'a yükle.
+
+
+------[21.2.6] ePBF Instruction Cheatsheet
+    
+                    eBPF komutu                         x86 asm'deki benzeri
+    ----------------------------------------------------------------------------
+    BPF_MOV64_IMM(BPF_REG_3, 1)                     mov reg3, 1
+    BPF_ALU64_REG(BPF_ARSH, BPF_REG_7, BPF_REG_5)   sar reg7, reg5
+    BPF_JMP_IMM(BPF_JNE, BPF_REG_3, 0, 3)           cmp reg3, 0 ; jne $rip+3
+    BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_9, 24)   mov reg3, DWORD PTR [reg9+24]
+    BPF_STX_MEM(BPF_DW, BPF_REG_8, BPF_REG_6, 0)    mov DWORD PTR [reg8+0], reg6
+
+
+------[21.2.7] BPF_PROG_LOAD
+
+    Yazdığımız eBPF programlarını çalıştırmak için bpf syscall'ına BPF_PROG_LOAD
+    komutunu veriyormuşuz ve bu bize bir fd döndürüyormuş. Bu fd'yi bir socket'e
+    bağlıyormuşuz ve bu socket'ten gelen her paket için yazdığımız program
+    çalıştırılıyormuş.
+
+    Kernel programımızı bir "hook point"e bağlıyormuş ve programımız "event
+    driven" bir şekilde, yani bu hook point'teki belirli vakalar gerçekleştikçe
+    çalıştırılıyormuş.
+
+
+----[21.3] eBPF Maps
+
+    Veri depolamak yahut diğer userspace programlarıyla (veya eBPF
+    programlarıyla) haberleşmek için kullanılan paylaşımlı hafıza benzeri
+    yapılar "map" olarak adlandırılıyor.
+
+    Map türleri:
+        o queue
+        o stack
+        o arraymap
+        o ..?
+
+    Map'ler 4 parametreye sahip: 
+        o type: türü
+        o key_size: index'lerin boyutu
+        o value_size: dizinin elemanlarının boyutu
+        o max_entries: dizinin uzunluğu
+        o map_flags: bazı özelliklerin aç/kapa yapıldığı bayraklar
+
+
+------[21.3.1] BPF_MAP_CREATE
+
+    bpf(2) syscall'ına bu komutu vererek map'ı oluşturtuyoruz ve bir fd
+    alıyoruz.
+
+
+----[21.4] JIT compiler
+
+    CONFIG_BPF_JIT_ALWAYS_ON özelliği elle kapatılmadığı sürece, tüm eBPF
+    programları BPF_PROG_LOAD ile yüklenirken JIT derleyicisinden geçermiş. eBFP
+    komutlarının x86 karşılıklarını bulmak kolay olduğu için bu JIT derleme
+    işlemi de oldukça basit bir süreçmiş. JIT'i açan kconfig'i CONFIG_BPF_JIT.
+
+    Bu derlenen programlar herhangi bir sandboxing olmadan kernelspace'de
+    çalışırmış.
+
+    Eğer JIT kapalıysa, toolchain (mesela BCC) kullanılarak bytecode'a
+    dönüştürülen kodumuz eBPF vm'inde (interpreter) çalıştırılırmış.
+ 
+
+----[21.5] Verifier
+
+    JIT compiler'dan geçen ePBF programlarındaki LDX ve STX'ler mov'lara
+    dönüştürüldüğü için kolayca yetkisiz hafıza erişimine olanak tanıyabileceği
+    için, kernel her eBPF programı için ilk olarak bir statik doğrulayıcı
+    çalıştırır. OOB erişimleri ve kernel leak'lerini engellemek amaçtır.
+
+    Yapılan denetim aşağı yukarı şunlardır (bazıları sadece yetkisiz işlemler
+    tarafından yüklenen eBPF programlarına uygulanıyormuş):
+
+        1. Bir pointer ve bir skaler değerin toplanması/çıkarılması hariç
+           hiçbir pointer aritmetiği veya mukayesesi yapılamaz (skaler: pointer
+           harici bir değerden türetilmiş değer).
+        
+        2. Hiçbir pointer aritmetiği bilinen güvenli hafıza alanları ("map"ler)
+           dışına erişemez.
+        
+        3. "Map"ler userspace'den erişilebilir olduğundan, buralarda hiçbir
+           pointer değeri saklanamaz yahut buralardan hiçbir pointer değeri
+           döndürülemez.
+        
+        4. Hiç bir komut (instruction) kendisine erişemez (yani program hiçbir
+           döngü içeremez).
+
+
+    Bu denetimleri gerçekleştirmek için doğrulayıcı bazı değerler kullanır:
+
+        1. umin ve umax: bir registerın tutabileceği unsigned int sınırları
+
+        2. smin ve smax: bir registerın tutabileceği   signed int sınırları
+        
+        3. var_off     : bir registerın hangi bitlerinin 1 ve 0 olduğu bilgisini
+                         tutan bir veri yapısı. Bunun aslı "struct tnum"dur ve
+                         "value" ve "mask" adında iki elemanı bulunur.
+
+                         struct tnum {
+                            u64 value; --> registerın 1 olduğu kesin olarak 
+                                           bilinen bitlerini 1 ile gösteren bir
+                                           değer
+                            u64 mask;  --> registerın ne olduğu bilinmeyen
+                                           bitlerini 1 ile gösteren bir değer
+                         }
+
+                         Mesela value = 010 ve mask 100 ise, bu register ya 010
+                         ya da 110 değerlerini alabilir.
+
+                         var_off, bir register'ın constant olduğunu göstermek
+                         içın kullanılabilir ve öyle olunca ilgili min ve max
+                         değerleri de güncellenir.
+
+
+----[21.6] ALU Sanitation
+
+    Verifier'da pek çok zafiyet ortaya çıkınca runtime'da denetimler yapan bu
+    ek doğrulayıcı geliştirilmiş. Bu doğrulayıcı; pointer ve skaler register
+    içeren her aritmetik işlem için "alu_limit" diye bir değer ile, en fazla ne
+    kadar toplama/çıkarma yapılabileceğini tespit ediyor.
+
+    alu_limit içeren tüm instruction'un öncesine şu komut serisi
+    sıkıştırılırmış (off_reg mevzu bahis skaler register'ı temsil ediyor ve
+    BPF_REG_AX da auxiliary <<destekçi>> register)
+
+        BPF_MOV32_IMM(BPF_REG_AX, aux->alu_limit - 1)
+        BPF_ALU64_REG(BPF_SUB, BPF_REG_AX, off_reg)
+        BPF_ALU64_REG(BPF_OR, BPF_REG_AX, off_reg)
+        BPF_ALU64_IMM(BPF_NEG, BPF_REG_AX, 0)
+        BPF_ALU64_IMM(BPF_ARSH, BPF_REG_AX, 63)
+        BPF_ALU64_REG(BPF_AND, off_reg, BPF_REG_AX)
+
+
+        > If the scalar exceeds alu_limit, then the first subtraction will be
+        > negative, so that the leftmost bit of BPF_REG_AX will be set.
+        > Similarly, if the scalar that is supposed to be positive is in fact
+        > negative, the BPF_OR instruction will set the leftmost bit of
+        > BPF_REG_AX. The negation followed by the arithmetic shift will then
+        > fill BPF_REG_AX with all 0s, so that the BPF_AND will force off_reg to
+        > zero, replacing the offending scalar. On the other hand, if the scalar
+        > falls within the appropriate range 0 <= off_reg <= alu_limit, the
+        > arithmetic shift will fill BPF_REG_AX with all 1s, so that the BPF_AND
+        > will leave the scalar register unchanged.
+        >
+        > To make sure that setting the register to 0 does not itself introduce
+        > a new out-of-bounds condition, the verifier will track an additional
+        > “speculative” branch where the operand is treated as 0.
+
+                                                            --Manfred Paul
+
+
+----[21.7] eBPF programlarını debuglamak
+
+    Chompie bunun çok basit olmadığını söylüyor. Birkaç şekilde yapılabilirmiş:
+
+
+------[21.7.1] Verifier logları
+
+    eBPF programını yüklerken log level seçip bir buffer verebiliyormuşuz
+    logları yazması için. Güzel çıktılar veriyor. Bu bufferın yeterince büyük
+    olmasına dikkat et yoksa kod doğru olsa bile verifier'dan geçmiyormuş.
+
+
+------[21.7.2] printk-oriented runtime debugging
+
+    Çalışma sırasında ne olup bittiğini görmek için JIT'i kapatıp, interpreterin
+    kernel/bpf/core.c:___bpf_prog_run() fonskiyonuna printk'lar sıkıştırarak
+    dmesg'e register dumpları vs. alınabilirmiş.
+
+
+------[21.7.3] gdb?
+
+    JIT açıkken native x86 asm'ye dönüştürülen bu kodu gdb ile takip etmek neden
+    zor acaba? Belki mümkündür fakat debugging sırasında programımızın eBPF
+    komutlarıyla yazılmış halini görmek isteyeceğimiz için tercih etmiyoruzdur
+    belki.
+
+
+----[21.8] eBPF zafiyetleri ve bunların exploit usulleri
+
+    Okunan birkaç write-up'ta görülmüştür ki eBPF'teki zafiyetler verifier ve
+    alu sanitation motorlarının kandırılması ve eBPF komutlarını OOB r/w
+    primitivlerine dönüştürmek üzerine bulunmaktadır. 32/64 bit register
+    idaresinde karışıklıklar, ALU işlemlerinin (+ - << >>) icrasında yapılan
+    hatalar... Bu gibi yanlışlıklar; mesela verifier'ın 0 olarak zannettiği 
+    registerın aslında 1 olması ile sonuçlanabilirse eğer, bu registeri 5000 ile
+    çarpınca da 0 olacağını zanneden yine aynı verifier'ın asıl değeri 
+    1*5000=5000 olan bir ptr ile karşı karşıya kalmasını ve fark edilmeden OOB
+    r/w'ye izin verilmesine sebep olabilir.
+
+    Sonra ise init task'ı bulunup, task structları üzerinde dolaşıp, current
+    task'ın uid'sini 0'a eşitlemek suretiyle root shell alınabilir.
+
+
+------[21.8.1] eBPF'i kullanarak başka bugları exploit etmek
+
+    Ayrıca eBPF'i doğrudan exploit etmeyip, eBPF vasıtasıyla başka bugları
+    exploit etmek diye bir şey de var. Mesela Qualys, filesystem sürücülerinin
+    birinde bir bug buluyor ve bu bug istedikleri kernel adresine "//deleted"
+    stringini yazmalarını sağlıyor. Onlar da bu string'i gidip verifier'ı geçmiş
+    eBPF kodunu JIT'e girmeden hemen önce (userfault_fd race condition ile)
+    yakalayıp düzenliyorlar ve OOB verecek bir hale getiriyorlar. Bu şekilde
+    diğer buglarla zincirlenince güzel bir exploitation yardımcısı oluyor [1].
+
+    Buna çözüm önerisi olarak eBPF kodunu RO yapma fikri yıllar önce spender'dan
+    gelmiş fakat ilgi görmemiş.
+
+    [1] https://www.qualys.com/2021/07/20/cve-2021-33909/sequoia-local-privilege-escalation-linux.txt
+
+
+----[21.9] Bu zafiyetlere önlemler
+
+------[21.9.1] BPF_UNPRIV_DEFAULT_OFF
+
+    Mayıs 2021'de kconfig'e 
+
+        BPF_UNPRIV_DEFAULT_OFF 
+
+    eklenmiş ve bu sysctl'in 
+
+        kernel.unprivileged_bpf_disabled
+
+    özelliğini açıyormuş. Kendi makinamda da bu şekilde. Bu, eBPF gediğini
+    oldukça kapatıyor.
+
+
+------[21.9.2] ALU sanitation
+
+    sıkılaştırmaları.
+
+
+----[21.10] ePBF exploitlerinin geleceği
+
+    chompie'ye göre hala sıkılaştırılması gereken bazı kısımları var.
+
+    Yazarın anladığı ise o kadar parlak bir geleceği yok. Ufak bir aldatma
+    hatası (1'i 0 olarak gösterebilme) OOB verebiliyor olsa da, eBPF'den şu
+    sonuç çıkıyor: Kernelin yeni eklenen özellikleri, ilk zamanlarında güzel
+    zafiyet madeni mahiyetinde. Yenilikleri takip etmek lazım.
 
 
 vim:set ts=8 sw=4 sts=4 et cc=80 tw=80:
